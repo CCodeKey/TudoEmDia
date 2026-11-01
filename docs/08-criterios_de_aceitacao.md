@@ -1,0 +1,1 @@
+# CRITÉRIOS DE ACEITAÇÃO
