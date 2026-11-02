@@ -20,4 +20,3 @@
 | Consultar usuários vinculados  | Sim | Não | Não |
 | Gerenciar acessos e permissões  | Sim | Não | Não |
 | Exportar relatórios  | Sim | Sim | Sim |
-

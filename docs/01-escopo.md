@@ -1,90 +1,134 @@
 # ESCOPO
 
-### Visão geral
+## Visão geral
 
-O projeto é uma plataforma web que centraliza contas, documentos e obrigações de pequenas empresas e avisa o dono antes de cada vencimento. O controle de prazos se junta a um painel consolidado de saúde financeira, no estilo do Investidor 10\.
+O TudoEmDia é uma plataforma web para pequenas empresas e MEIs centralizarem obrigações financeiras, documentos empresariais e prazos importantes. O sistema permite acompanhar contas a pagar, registrar pagamentos, armazenar anexos e receber alertas por e-mail antes dos vencimentos.
 
-### Problema principal
+O MVP será desenvolvido com:
 
-Pequenos empresários perdem prazos porque contas, impostos, certidões e contratos estão espalhados em e-mails, papéis, planilhas e na memória de quem toca o negócio.
+- **Back-end:** Java com Spring;
+- **Front-end:** React, Vite e JavaScript;
+- **Arquitetura:** MVC no back-end e API REST para comunicação com o front-end;
+- **Execução:** Docker e Docker Compose;
+- **Persistência:** PostgreSQL.
 
-Multas e juros por atraso em boletos, DAS, FGTS e outras guias.
+## Problema
 
-Documentos vencidos, como alvarás, certidões e contratos, que podem travar licitações, crédito ou a operação.
+Pequenos empresários frequentemente controlam boletos, impostos, contratos, alvarás e certidões em papéis, planilhas, e-mails ou na memória. Essa dispersão dificulta:
 
-O dono não sabe quanto vai pagar e receber nas próximas semanas.
+- acompanhar obrigações próximas do vencimento;
+- evitar multas, juros e atrasos;
+- localizar documentos empresariais;
+- saber quem realizou um pagamento;
+- compartilhar responsabilidades com a equipe e o contador.
 
-Tudo depende de uma pessoa: se ela sai ou esquece, ninguém mais sabe o que está pendente.
+## Solução
 
-ERPs são caros e complexos para esse porte, e planilhas não avisam ninguém.
+O sistema oferecerá um ambiente único para cada empresa, com:
 
-### Solução proposta
+1. cadastro e acompanhamento de obrigações a pagar;
+2. categorias para organização das obrigações;
+3. recorrência mensal ou anual;
+4. anexos associados às obrigações e documentos;
+5. central de documentos empresariais com validade e status;
+6. registro de pagamentos e histórico do usuário responsável;
+7. alertas de vencimento por e-mail;
+8. painel com indicadores financeiros das obrigações;
+9. controle de acesso por empresa e perfil;
+10. exportação de informações em PDF.
 
-Um painel único onde a empresa cadastra o que precisa pagar, receber e manter em dia, e recebe alertas antes de cada vencimento. Ele tem seis módulos.
+## Público-alvo
 
-1\. Cadastro de contas e obrigações, com descrição, valor, categoria, vencimento, recorrência (mensal ou anual) e anexo do boleto ou documento.
+O produto é destinado a pequenas empresas e MEIs que não possuem uma estrutura financeira complexa.
 
-2\. Central de documentos para alvarás, certidões, contratos e licenças, com data de validade e status.
+| Perfil | Usuário | Necessidade |
+|---|---|---|
+| Proprietário | Dono ou sócio da empresa | Acompanhar prazos, valores e situação financeira |
+| Financeiro | Responsável administrativo ou financeiro | Cadastrar obrigações e registrar pagamentos |
+| Contador | Profissional responsável pela contabilidade | Consultar obrigações, documentos e histórico |
 
-3\. Alertas 7, 3 e 1 dia antes do vencimento e no próprio dia, por e-mail (WhatsApp depois do MVP).
+## Funcionalidades do MVP
 
-4\. Dashboard de saúde financeira, com total a pagar no mês, fluxo de caixa projetado, gráficos por categoria e um indicador de obrigações em dia.
+### Usuários, empresas e acessos
 
-5\. Perfis de acesso para dono, financeiro e contador, cada um com suas permissões. 6\. Histórico de quem pagou e quando, com exportação em PDF ou planilha.
+- Cadastro e autenticação de usuários.
+- Cadastro de empresas pelo usuário autenticado.
+- Vínculo de usuários a empresas.
+- Convite de usuários por e-mail.
+- Perfis: proprietário, financeiro e contador.
+- Autorização conforme a matriz de permissões.
+- Isolamento dos dados entre empresas.
 
-### Público-alvo
+### Obrigações
 
-O foco são pequenas empresas e MEIs que não têm um setor financeiro estruturado e sofrem com multas por esquecimento.
+- Cadastro, consulta, edição e exclusão de obrigações.
+- Descrição, valor, categoria e data de vencimento.
+- Situação da obrigação: pendente, paga ou vencida.
+- Inclusão de anexos, como boletos e guias.
+- Configuração de recorrência mensal ou anual.
+- Geração de novas ocorrências recorrentes.
 
-| Perfil     | Quem é                                                                                     | Por que usaria                                                                |
-| ---------- | :----------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
-| Principal  | Dono ou sócio de pequena empresa (padaria, clínica, oficina, loja) com 1 a 20 funcionários | Quer evitar multas e saber quanto vai pagar no mês                            |
-| Secundário | Responsável financeiro ou administrativo da empresa                                        | Precisa de um lugar único para registrar e acompanhar pagamentos              |
-| Parceiro   | Contador que atende várias pequenas empresas                                               | Ganha visibilidade das obrigações dos clientes e reduz cobranças por WhatsApp |
+### Pagamentos
 
-Exemplo de persona: Marcos, 42 anos, dono de uma padaria com 8 funcionários. Ele controla boletos num caderno, já pagou multa de DAS atrasado e não sabe quando vence o alvará sanitário.
+- Registro da data de pagamento.
+- Associação do pagamento à obrigação.
+- Identificação do usuário que registrou o pagamento.
+- Consulta do histórico de pagamentos.
 
-### Diferenciais
+### Documentos
 
-A diferença está em juntar prazos e visão financeira numa ferramenta pensada para quem não tem equipe de finanças.
+- Cadastro, consulta, edição e exclusão de documentos empresariais.
+- Descrição, categoria, arquivo e caminho de armazenamento.
+- Data de validade e status do documento.
+- Controle de acesso conforme a empresa e o perfil do usuário.
 
-| Alternativa                      | Limitação                                   | Como o projeto resolve                     |
-| :------------------------------- | ------------------------------------------- | :----------------------------------------- |
-| Planilhas                        | Não avisam ninguém e dependem de disciplina | Alertas automáticos e recorrência          |
-| ERPs completos                   | Caros e complexos para o porte              | Interface enxuta, focada em vencimentos    |
-| Apps de finanças pessoais        | Não tratam documentos nem perfis de equipe  | Central de documentos e multiusuário       |
-| Controle manual (papel, memória) | Depende de uma só pessoa                    | Histórico compartilhado e perfis de acesso |
+### Alertas
 
-Dashboard estilo Investidor 10, com indicadores e gráficos consolidados numa tela em vez de listas soltas.
+- Configuração dos dias de antecedência por empresa.
+- Alertas por e-mail 7, 3 e 1 dia antes do vencimento e no dia do vencimento.
+- Registro dos alertas enviados.
+- Prevenção de envio duplicado para o mesmo destinatário, obrigação e prazo.
+- Processamento por rotina agendada no back-end Spring.
 
-Contas, impostos, certidões e contratos no mesmo lugar.
+### Painel e relatórios
 
-Alertas por WhatsApp, previstos para depois do MVP.
+- Total de obrigações a pagar no mês selecionado.
+- Lista de obrigações vencidas e não pagas.
+- Distribuição dos valores por categoria.
+- Indicador de obrigações em dia.
+- Exportação de obrigações e pagamentos em PDF.
 
-Um mesmo contador acompanhando vários clientes, também previsto para depois do MVP.
+## Fora do MVP
 
-Assinatura mensal por faixa de uso, sem taxa de implantação.
+Os seguintes itens não fazem parte da primeira versão:
 
-### Escopo do MVP
+- alertas por WhatsApp;
+- leitura automática de boletos;
+- integração com bancos ou instituições financeiras;
+- emissão de guias de impostos;
+- contas a receber;
+- fluxo de caixa projetado com entradas financeiras;
+- aplicativo móvel nativo;
+- painel multicliente para escritórios de contabilidade;
+- cobrança e assinatura por faixa de uso.
 
-A primeira versão permite cadastrar contas, acompanhá-las e receber o aviso, sem integrações externas complexas.
+Esses itens poderão ser avaliados em versões futuras, após a validação do MVP.
 
-#### O que entra
+## Premissas e limites
 
-Cadastro e login de usuários, com perfis (dono, financeiro, contador) CRUD de contas e documentos, com categoria, valor, vencimento e anexo Recorrência de contas (mensal e anual)
+- O sistema controla obrigações e pagamentos informados pelos usuários; não realiza pagamentos.
+- O envio de e-mails depende de um serviço de e-mail configurado no ambiente.
+- Os arquivos serão armazenados conforme a estratégia definida pelo ambiente de execução, sem expor caminhos diretamente a usuários não autorizados.
+- As regras de negócio detalhadas e os critérios de aceitação devem complementar este documento.
 
-Alertas por e-mail antes do vencimento, gerados por rotina agendada Dashboard com total a pagar no mês, itens vencidos e gráfico por categoria Histórico de pagamentos e exportação em PDF ou planilha
+## Requisitos não funcionais considerados
 
-#### O que fica para as próximas versões
-
-Alertas por WhatsApp
-
-Leitura automática de boletos e integração com bancos
-
-Emissão de guias de imposto
-
-Aplicativo móvel nativo
-
-Painel multicliente para escritórios de contabilidade
-
-Requisitos não funcionais: senhas protegidas por hash, acesso restrito por perfil, dados isolados por empresa e interface responsiva.
+- Senhas armazenadas somente com hash seguro.
+- Autenticação e autorização por perfil.
+- Isolamento dos dados por empresa.
+- Comunicação HTTPS em produção.
+- Interface responsiva para computadores, tablets e celulares.
+- Compatibilidade com versões recentes de Chrome, Firefox e Edge.
+- Validação de dados no front-end e no back-end.
+- Integridade garantida por transações, relacionamentos e restrições do banco.
+- Execução padronizada dos serviços por Docker.
