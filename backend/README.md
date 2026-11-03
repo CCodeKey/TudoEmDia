@@ -22,13 +22,17 @@ API REST do TudoEmDia, desenvolvida em Java com Spring Boot, seguindo o padrão 
 
 ## Configuração
 
-As credenciais do banco são lidas de variáveis de ambiente, sem ficar gravadas no código. Use o [.env.example](../.env.example) como referência:
+As credenciais do banco não ficam no código. O `application.properties` só referencia as variáveis (`${SPRING_DATASOURCE_URL}` etc.), e os valores vêm de um arquivo `.env` na raiz do repositório, que está no `.gitignore`.
+
+Para configurar, copie o [.env.example](../.env.example) para `.env` na raiz e preencha os valores:
 
 ```env
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/tudoemdia
 SPRING_DATASOURCE_USERNAME=usuario
 SPRING_DATASOURCE_PASSWORD=senha
 ```
+
+O Spring carrega esse arquivo por meio de `spring.config.import`, procurando primeiro no diretório atual e depois no diretório pai. Assim ele funciona tanto ao rodar de dentro de `backend/` quanto da raiz. Se as mesmas variáveis estiverem definidas no sistema ou no Docker (`env_file`), elas têm prioridade sobre o arquivo.
 
 ## Executando
 
@@ -107,10 +111,16 @@ O `ObrigacaoRepository` também estende `JpaSpecificationExecutor`, para os filt
 
 ## Pendências
 
-- [ ] Criar as migrations do Flyway em `src/main/resources/db/migration`, incluindo:
-  - as categorias padrão (Impostos, Fornecedores, Folha de pagamento, Aluguel e consumo, Outros);
-  - um índice único parcial em `pagamento(id_obrigacao) WHERE cancelado = false`, para garantir no máximo um pagamento vigente por obrigação.
-- [ ] Configurar o datasource no `application.properties` e o serviço do banco no `docker-compose.yml`.
+- [x] Criar a migration inicial do Flyway ([V1__criar_tabelas.sql](src/main/resources/db/migration/V1__criar_tabelas.sql)), com as tabelas, as categorias padrão e o índice único parcial que garante no máximo um pagamento vigente por obrigação.
+- [x] Configurar o datasource e o JPA no `application.properties`.
+- [x] Ler as credenciais do banco a partir do `.env`, em vez de valores fixos.
+- [ ] Configurar o serviço do banco no `docker-compose.yml`.
+
+## Migrations
+
+O esquema do banco é criado e versionado pelo Flyway, que executa os scripts de `src/main/resources/db/migration` ao iniciar a aplicação. O Hibernate apenas valida as entidades contra o banco (`ddl-auto=validate`).
+
+Uma migration já aplicada nunca deve ser editada: toda alteração no esquema entra em um novo arquivo, seguindo a sequência `V2__descricao.sql`, `V3__descricao.sql` etc.
 
 ## Observação sobre o Lombok
 
