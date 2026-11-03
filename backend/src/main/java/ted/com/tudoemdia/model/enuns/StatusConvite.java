@@ -1,4 +1,4 @@
-package ted.com.tudoemdia.model;
+package ted.com.tudoemdia.model.enuns;
 
 public enum StatusConvite {
 	PENDENTE,

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ted.com.tudoemdia.model.Convite;
-import ted.com.tudoemdia.model.StatusConvite;
+import ted.com.tudoemdia.model.enuns.StatusConvite;
 
 public interface ConviteRepository extends JpaRepository<Convite, String> {
 
@@ -19,8 +19,8 @@ public interface ConviteRepository extends JpaRepository<Convite, String> {
 	// Convites não aceitos em 7 dias (RN15)
 	@Modifying
 	@Query("""
-			update Convite c set c.status = ted.com.tudoemdia.model.StatusConvite.EXPIRADO
-			where c.status = ted.com.tudoemdia.model.StatusConvite.PENDENTE and c.dataExpiracao < :agora
+			update Convite c set c.status = ted.com.tudoemdia.model.enuns.StatusConvite.EXPIRADO
+			where c.status = ted.com.tudoemdia.model.enuns.StatusConvite.PENDENTE and c.dataExpiracao < :agora
 			""")
 	int expirarPendentes(@Param("agora") LocalDateTime agora);
 }

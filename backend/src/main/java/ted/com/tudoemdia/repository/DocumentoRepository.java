@@ -22,8 +22,8 @@ public interface DocumentoRepository extends JpaRepository<Documento, String> {
 	// Documentos com validade expirada passam a Vencido (RN51)
 	@Modifying
 	@Query("""
-			update Documento d set d.status = ted.com.tudoemdia.model.StatusDocumento.VENCIDO
-			where d.status = ted.com.tudoemdia.model.StatusDocumento.ATIVO and d.dataValidade < :hoje
+			update Documento d set d.status = ted.com.tudoemdia.model.enuns.StatusDocumento.VENCIDO
+			where d.status = ted.com.tudoemdia.model.enuns.StatusDocumento.ATIVO and d.dataValidade < :hoje
 			""")
 	int marcarVencidos(@Param("hoje") LocalDate hoje);
 }

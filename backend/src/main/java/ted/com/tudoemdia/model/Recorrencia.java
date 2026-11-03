@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ted.com.tudoemdia.model.enuns.Periodicidade;
 
 @Entity
 @Table(name = "recorrencia")

@@ -15,6 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ted.com.tudoemdia.model.enuns.Perfil;
 
 @Entity
 @Table(name = "usuario_empresa",

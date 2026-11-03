@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import ted.com.tudoemdia.model.enuns.StatusDocumento;
 
 @Entity
 @Table(name = "documento")

@@ -3,8 +3,8 @@ package ted.com.tudoemdia.repository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ted.com.tudoemdia.model.Perfil;
 import ted.com.tudoemdia.model.UsuarioEmpresa;
+import ted.com.tudoemdia.model.enuns.Perfil;
 
 public interface UsuarioEmpresaRepository extends JpaRepository<UsuarioEmpresa, String> {
 

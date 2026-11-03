@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ted.com.tudoemdia.model.Obrigacao;
-import ted.com.tudoemdia.model.StatusObrigacao;
+import ted.com.tudoemdia.model.enuns.StatusObrigacao;
 
 // JpaSpecificationExecutor atende aos filtros por período, categoria e situação (RN32, RN92)
 public interface ObrigacaoRepository extends JpaRepository<Obrigacao, String>, JpaSpecificationExecutor<Obrigacao> {
@@ -40,8 +40,8 @@ public interface ObrigacaoRepository extends JpaRepository<Obrigacao, String>, J
 	// Recálculo diário da situação (RN44, RN46)
 	@Modifying
 	@Query("""
-			update Obrigacao o set o.status = ted.com.tudoemdia.model.StatusObrigacao.VENCIDA
-			where o.status = ted.com.tudoemdia.model.StatusObrigacao.PENDENTE and o.dataVencimento < :hoje
+			update Obrigacao o set o.status = ted.com.tudoemdia.model.enuns.StatusObrigacao.VENCIDA
+			where o.status = ted.com.tudoemdia.model.enuns.StatusObrigacao.PENDENTE and o.dataVencimento < :hoje
 			""")
 	int marcarVencidas(@Param("hoje") LocalDate hoje);
 
