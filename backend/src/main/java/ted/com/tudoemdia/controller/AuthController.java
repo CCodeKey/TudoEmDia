@@ -43,11 +43,14 @@ public class AuthController {
 		this.securityContextRepository = securityContextRepository;
 	}
 
-	// Gera o cookie XSRF-TOKEN; o front o reenvia no cabeçalho X-XSRF-TOKEN
+	// Gera o cookie XSRF-TOKEN; o front o reenvia no cabeçalho X-XSRF-TOKEN.
+	// Com o CSRF desligado, só responde 204, para o front funcionar nos dois modos
 	@GetMapping("/csrf")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void csrf(CsrfToken token) {
-		token.getToken();
+		if (token != null) {
+			token.getToken();
+		}
 	}
 
 	@PostMapping("/cadastro")

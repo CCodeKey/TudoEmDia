@@ -25,16 +25,22 @@ public class SegurancaConfig {
 
 	@Bean
 	public SecurityFilterChain filtroSeguranca(HttpSecurity http, SecurityContextRepository contextoRepository,
-			@Value("${app.seguranca.exigir-https}") boolean exigirHttps) throws Exception {
+			@Value("${app.seguranca.exigir-https}") boolean exigirHttps,
+			@Value("${app.seguranca.csrf-habilitado}") boolean csrfHabilitado) throws Exception {
 		if (exigirHttps) {
 			// Acessos por HTTP são redirecionados para HTTPS (RNF13)
 			http.redirectToHttps(Customizer.withDefaults());
 		}
+		if (csrfHabilitado) {
+			// Token CSRF no cookie XSRF-TOKEN, devolvido pelo front no cabeçalho X-XSRF-TOKEN
+			http.csrf(csrf -> csrf.spa());
+		} else {
+			// Desligado temporariamente para facilitar os testes manuais; religar antes de produção
+			http.csrf(AbstractHttpConfigurer::disable);
+		}
 		http
 				.cors(cors -> {
 				})
-				// Token CSRF no cookie XSRF-TOKEN, devolvido pelo front no cabeçalho X-XSRF-TOKEN
-				.csrf(csrf -> csrf.spa())
 				.securityContext(contexto -> contexto.securityContextRepository(contextoRepository))
 				.authorizeHttpRequests(rotas -> rotas
 						.requestMatchers(HttpMethod.GET, "/api/auth/csrf", "/api/convites/*").permitAll()

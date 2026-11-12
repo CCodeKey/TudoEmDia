@@ -45,6 +45,7 @@ Variáveis opcionais:
 | `MAIL_SMTP_AUTH`, `MAIL_SMTP_STARTTLS` | `true` | Use `false` com o Mailpit |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | — | Banco criado pelo `docker-compose.yml` |
 | `SESSION_COOKIE_SECURE`, `EXIGIR_HTTPS` | `false` | Produção com HTTPS (veja abaixo) |
+| `CSRF_HABILITADO` | `false` | Proteção CSRF; ligar antes de produção |
 
 Sem `MAIL_HOST`, os e-mails não são enviados: o texto da mensagem aparece no log, o que permite testar convites em desenvolvimento. Nesse modo os alertas de vencimento não são processados.
 
@@ -111,7 +112,11 @@ src/main/java/ted/com/tudoemdia/
 
 ## Autenticação e permissões
 
-A API usa **sessão em cookie** (`JSESSIONID`), que expira após 30 minutos sem atividade (RN07). Como o cookie é enviado automaticamente pelo navegador, as requisições que alteram dados (`POST`, `PUT`, `PATCH`, `DELETE`) exigem o **token CSRF**:
+A API usa **sessão em cookie** (`JSESSIONID`), que expira após 30 minutos sem atividade (RN07). O Postman e o navegador guardam e reenviam esse cookie sozinhos.
+
+> **Por enquanto, a proteção CSRF está desligada** (`CSRF_HABILITADO=false`, o padrão), para facilitar os testes manuais: basta fazer login e chamar os endpoints. **Antes de produção, defina `CSRF_HABILITADO=true`.** Os testes de integração já rodam com ela ligada.
+
+Com o CSRF ligado, as requisições que alteram dados (`POST`, `PUT`, `PATCH`, `DELETE`) exigem o **token CSRF**:
 
 1. `GET /api/auth/csrf` grava o cookie `XSRF-TOKEN`;
 2. o front envia o valor desse cookie no cabeçalho `X-XSRF-TOKEN`;
@@ -187,6 +192,7 @@ A aplicação deve ficar atrás de um proxy reverso com HTTPS (Nginx, Traefik ou
 
 - `SESSION_COOKIE_SECURE=true`: o cookie de sessão só trafega por HTTPS;
 - `EXIGIR_HTTPS=true`: acessos por HTTP são redirecionados para HTTPS;
+- `CSRF_HABILITADO=true`: religa a proteção CSRF;
 - `FRONTEND_URL` com o endereço público do front;
 - um servidor SMTP real em `MAIL_*`.
 

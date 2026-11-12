@@ -25,9 +25,10 @@ import org.springframework.context.annotation.Import;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-// Fluxos completos pela API HTTP, com sessão, CSRF e banco Postgres real (descartável)
+// Fluxos completos pela API HTTP, com sessão, CSRF e banco Postgres real (descartável).
+// Roda com o CSRF ligado, como em produção, para garantir que religá-lo continua funcionando
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = "app.armazenamento.diretorio=target/uploads-teste")
+		properties = { "app.armazenamento.diretorio=target/uploads-teste", "app.seguranca.csrf-habilitado=true" })
 @Import(BancoDeTesteConfig.class)
 class FluxoApiTests {
 
