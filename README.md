@@ -65,7 +65,7 @@ O MVP contempla:
 - [Requisitos funcionais](docs/02-requisitos_funcionais.md)
 - [Requisitos não funcionais](docs/03-requisitos_nao_funcionais.md)
 - [Permissões de usuário](docs/04-permissoes_de_usuario.md)
-- [Regras de negócio](docs/05-regras-de-negocio.md)
+- [Regras de negócio](docs/05-regras_de_negocio.md)
 - [Modelo de dados](docs/06-modelo_de_dados.drawio)
 - [Arquitetura](docs/07-arquitetura.md)
 - [Critérios de aceitação](docs/08-criterios_de_aceitacao.md)

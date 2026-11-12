@@ -27,4 +27,7 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, String> {
 			String empresaId, LocalDate inicio, LocalDate fim);
 
 	List<Pagamento> findByObrigacaoIdOrderByDataRegistroDesc(String obrigacaoId);
+
+	// Pagamentos registrados pelo titular dos dados (RNF14)
+	long countByUsuarioId(String usuarioId);
 }

@@ -18,7 +18,7 @@ API REST do TudoEmDia, desenvolvida em Java com Spring Boot, seguindo o padrão 
 ## Pré-requisitos
 
 - JDK 21 ou superior;
-- PostgreSQL acessível (local ou via Docker);
+- Docker Desktop (ou Docker Engine com Compose), para o banco local e para os testes de integração;
 - Maven não é necessário: o projeto usa o Maven Wrapper (`mvnw`).
 
 ## Configuração
@@ -42,27 +42,57 @@ Variáveis opcionais:
 | `FRONTEND_URL` | `http://localhost:5173` | Origem liberada no CORS e base dos links enviados por e-mail |
 | `ARMAZENAMENTO_DIR` | `uploads` | Pasta dos anexos e documentos (fica fora do Git e de qualquer pasta pública) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | — | Servidor SMTP para convites e alertas |
+| `MAIL_SMTP_AUTH`, `MAIL_SMTP_STARTTLS` | `true` | Use `false` com o Mailpit |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | — | Banco criado pelo `docker-compose.yml` |
+| `SESSION_COOKIE_SECURE`, `EXIGIR_HTTPS` | `false` | Produção com HTTPS (veja abaixo) |
 
 Sem `MAIL_HOST`, os e-mails não são enviados: o texto da mensagem aparece no log, o que permite testar convites em desenvolvimento. Nesse modo os alertas de vencimento não são processados.
 
 ## Executando
 
-```bash
-# Linux / macOS / Git Bash
-./mvnw spring-boot:run
+### Tudo no Docker
 
-# Windows (PowerShell / CMD)
-mvnw.cmd spring-boot:run
-```
-
-Outros comandos úteis:
+Na raiz do repositório:
 
 ```bash
-./mvnw compile            # compila o projeto
-./mvnw test "-Dtest=*Test" # testes unitários das regras de negócio (não usam o banco)
-./mvnw test               # todos os testes, incluindo o que sobe a aplicação com o banco
-./mvnw package            # gera o .jar em target/
+docker compose up -d --build   # banco, e-mail (Mailpit) e back-end
+docker compose logs -f backend # acompanha o log
+docker compose down            # para tudo (os dados ficam nos volumes)
 ```
+
+| Serviço | Endereço |
+|---|---|
+| API | http://localhost:8080/api |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| Mailpit (caixa de entrada dos e-mails enviados) | http://localhost:8025 |
+| PostgreSQL | `localhost:5432` |
+
+Dentro do compose, o back-end usa o Postgres e o Mailpit dele, ignorando a conexão do `.env`.
+
+### Back-end pela IDE, com banco e e-mail no Docker
+
+```bash
+docker compose up -d postgres mailpit
+```
+
+No `.env`, aponte `SPRING_DATASOURCE_URL` para `jdbc:postgresql://localhost:5432/tudoemdia` (usuário e senha iguais a `POSTGRES_USER` e `POSTGRES_PASSWORD`) e configure `MAIL_HOST=localhost`, `MAIL_PORT=1025`, `MAIL_SMTP_AUTH=false` e `MAIL_SMTP_STARTTLS=false`. Depois:
+
+```bash
+./mvnw spring-boot:run     # Linux / macOS / Git Bash
+mvnw.cmd spring-boot:run   # Windows (PowerShell / CMD)
+```
+
+## Testes e linter
+
+```bash
+./mvnw verify               # linter + todos os testes + .jar (o Docker precisa estar rodando)
+./mvnw test "-Dtest=*Test"  # só os testes unitários, sem Docker
+./mvnw checkstyle:check     # só o linter
+```
+
+- **Unitários** (`*Test`): regras de negócio isoladas, com Mockito.
+- **Integração** (`*Tests`): sobem a aplicação com um PostgreSQL descartável (Testcontainers) e percorrem fluxos completos pela API HTTP, com sessão e CSRF. Nunca usam o banco do `.env`.
+- **Linter**: Checkstyle, configurado em [checkstyle.xml](checkstyle.xml). Roda em todo build e falha se houver violações (RNF11).
 
 ## Estrutura de pacotes
 
@@ -104,6 +134,8 @@ Todas as rotas começam com `/api`. Exigem login, exceto as marcadas como públi
 | POST | `/auth/login` | Inicia a sessão (público) |
 | POST | `/auth/logout` | Encerra a sessão |
 | GET | `/auth/me` | Usuário logado |
+| GET | `/conta/dados` | Dados pessoais mantidos sobre o usuário (LGPD) |
+| POST | `/conta/exclusao` | Exclui a conta, confirmando a senha (LGPD) |
 | GET, POST | `/empresas` | Empresas do usuário; cadastra uma empresa (quem cadastra vira proprietário) |
 | GET | `/empresas/{e}` | Dados da empresa e perfil do usuário nela |
 | GET | `/empresas/{e}/permissoes` | Permissões do usuário na empresa |
@@ -141,6 +173,24 @@ Todas as rotas começam com `/api`. Exigem login, exceto as marcadas como públi
 | 8h | Envia os alertas de vencimento (7, 3 e 1 dia antes e no dia), sem repetir envios |
 
 As duas também rodam ao iniciar a aplicação (os alertas, só depois das 8h), para recuperar o que não foi processado enquanto ela estava parada. São idempotentes: rodar de novo não duplica nada.
+
+## LGPD (RNF14)
+
+- O consentimento com os termos é registrado com data no cadastro.
+- `GET /api/conta/dados` mostra ao titular os dados pessoais mantidos: nome, e-mail, datas, empresas, convites recebidos e quantidade de pagamentos registrados.
+- `POST /api/conta/exclusao` **anonimiza** a conta em vez de apagá-la. Nome e e-mail são substituídos, a senha é descartada, os acessos são desativados e os convites pendentes, cancelados. Pagamentos e edições continuam no histórico (RN21, RN73), mas deixam de identificar a pessoa. O único proprietário de uma empresa precisa definir outro antes de excluir a conta.
+- A política de privacidade visível em todas as páginas fica a cargo do front-end.
+
+## Produção (HTTPS, RNF13)
+
+A aplicação deve ficar atrás de um proxy reverso com HTTPS (Nginx, Traefik ou o balanceador do provedor) que repasse os cabeçalhos `X-Forwarded-*`. Nesse ambiente, defina:
+
+- `SESSION_COOKIE_SECURE=true`: o cookie de sessão só trafega por HTTPS;
+- `EXIGIR_HTTPS=true`: acessos por HTTP são redirecionados para HTTPS;
+- `FRONTEND_URL` com o endereço público do front;
+- um servidor SMTP real em `MAIL_*`.
+
+A versão mínima do TLS (1.2 ou superior) é configurada no proxy.
 
 ## Modelo de domínio
 
@@ -194,8 +244,10 @@ O `ObrigacaoRepository` também estende `JpaSpecificationExecutor`, para os filt
 - [x] Configurar o datasource e o JPA no `application.properties`.
 - [x] Ler as credenciais do banco a partir do `.env`, em vez de valores fixos.
 - [x] Services e controllers com as regras de negócio e a matriz de permissões.
-- [ ] Configurar o serviço do banco no `docker-compose.yml`.
-- [ ] Atendimento ao titular dos dados (acesso e exclusão, RNF14).
+- [x] `docker-compose.yml` com banco, e-mail e back-end; `Dockerfile` do back-end.
+- [x] Testes de integração com banco descartável e linter.
+- [x] Atendimento ao titular dos dados (acesso e exclusão, RNF14).
+- [ ] Serviço `frontend` no `docker-compose.yml`, quando a aplicação React existir.
 
 ## Migrations
 

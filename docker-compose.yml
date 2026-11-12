@@ -1,0 +1,59 @@
+# Ambiente de desenvolvimento do TudoEmDia (docs/07-arquitetura.md)
+#   docker compose up -d                    -> banco, e-mail e back-end
+#   docker compose up -d postgres mailpit   -> só banco e e-mail, para rodar o back-end pela IDE
+# Valores lidos do .env na raiz (veja .env.example).
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tudoemdia}
+      POSTGRES_USER: ${POSTGRES_USER:-tudoemdia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-dados:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Servidor de e-mail falso: as mensagens enviadas aparecem em http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.32
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  backend:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    # Sobrescreve o .env para usar os serviços deste compose
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-tudoemdia}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-tudoemdia}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS: "false"
+      ARMAZENAMENTO_DIR: /app/uploads
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # O serviço "frontend" entra aqui quando a aplicação React existir.
+
+volumes:
+  postgres-dados:
+  uploads:

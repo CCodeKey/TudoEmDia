@@ -18,6 +18,11 @@ public interface ConviteRepository extends JpaRepository<Convite, String> {
 
 	List<Convite> findByEmpresaIdOrderByDataEnvioDesc(String empresaId);
 
+	// Convites recebidos e enviados pelo titular dos dados (RNF14)
+	List<Convite> findByEmailConvidadoIgnoreCase(String email);
+
+	List<Convite> findByConvidanteIdAndStatus(String usuarioId, StatusConvite status);
+
 	// Convite ainda válido para o mesmo e-mail
 	boolean existsByEmpresaIdAndEmailConvidadoIgnoreCaseAndStatusAndDataExpiracaoAfter(String empresaId,
 			String email, StatusConvite status, LocalDateTime agora);

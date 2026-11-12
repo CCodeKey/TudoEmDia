@@ -16,6 +16,9 @@ public interface UsuarioEmpresaRepository extends JpaRepository<UsuarioEmpresa, 
 	// Empresas que o usuário pode selecionar (RN11)
 	List<UsuarioEmpresa> findByUsuarioIdAndAtivoTrue(String usuarioId);
 
+	// Todos os vínculos, inclusive desativados, para o titular dos dados (RNF14)
+	List<UsuarioEmpresa> findByUsuarioId(String usuarioId);
+
 	// Usuários vinculados (RN18)
 	List<UsuarioEmpresa> findByEmpresaId(String empresaId);
 

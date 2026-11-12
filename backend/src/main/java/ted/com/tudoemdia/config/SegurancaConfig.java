@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,8 +24,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SegurancaConfig {
 
 	@Bean
-	public SecurityFilterChain filtroSeguranca(HttpSecurity http, SecurityContextRepository contextoRepository)
-			throws Exception {
+	public SecurityFilterChain filtroSeguranca(HttpSecurity http, SecurityContextRepository contextoRepository,
+			@Value("${app.seguranca.exigir-https}") boolean exigirHttps) throws Exception {
+		if (exigirHttps) {
+			// Acessos por HTTP são redirecionados para HTTPS (RNF13)
+			http.redirectToHttps(Customizer.withDefaults());
+		}
 		http
 				.cors(cors -> {
 				})
