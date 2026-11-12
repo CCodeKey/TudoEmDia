@@ -9,6 +9,8 @@ public interface RecorrenciaRepository extends JpaRepository<Recorrencia, String
 
 	Optional<Recorrencia> findByIdAndEmpresaId(String id, String empresaId);
 
+	List<Recorrencia> findByEmpresaIdOrderByDescricaoAsc(String empresaId);
+
 	// Processadas pela rotina diária de geração (RN62)
 	List<Recorrencia> findByAtivaTrue();
 

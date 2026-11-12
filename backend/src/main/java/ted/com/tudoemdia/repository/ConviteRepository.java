@@ -1,6 +1,7 @@
 package ted.com.tudoemdia.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,8 +14,13 @@ public interface ConviteRepository extends JpaRepository<Convite, String> {
 
 	Optional<Convite> findByTokenHash(String tokenHash);
 
-	boolean existsByEmpresaIdAndEmailConvidadoIgnoreCaseAndStatus(String empresaId, String email,
-			StatusConvite status);
+	Optional<Convite> findByIdAndEmpresaId(String id, String empresaId);
+
+	List<Convite> findByEmpresaIdOrderByDataEnvioDesc(String empresaId);
+
+	// Convite ainda válido para o mesmo e-mail
+	boolean existsByEmpresaIdAndEmailConvidadoIgnoreCaseAndStatusAndDataExpiracaoAfter(String empresaId,
+			String email, StatusConvite status, LocalDateTime agora);
 
 	// Convites não aceitos em 7 dias (RN15)
 	@Modifying

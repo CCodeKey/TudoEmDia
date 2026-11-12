@@ -8,4 +8,6 @@ public interface AlertaEnviadoRepository extends JpaRepository<AlertaEnviado, St
 	// Prevenção de envio duplicado (RN78, RNF10)
 	boolean existsByObrigacaoIdAndUsuarioIdAndDiasAntecedencia(String obrigacaoId, String usuarioId,
 			int diasAntecedencia);
+
+	void deleteByObrigacaoId(String obrigacaoId);
 }

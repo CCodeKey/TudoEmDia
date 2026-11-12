@@ -8,6 +8,7 @@ API REST do TudoEmDia, desenvolvida em Java com Spring Boot, seguindo o padrão 
 |---|---|
 | Java 21 | Linguagem |
 | Spring Boot 4 (Web, Validation, Data JPA, Mail, Actuator) | Base da API |
+| Spring Security | Autenticação por sessão, CSRF e senhas com BCrypt |
 | PostgreSQL | Banco de dados |
 | Flyway | Versionamento do esquema do banco |
 | Lombok | Geração de getters, setters e construtores |
@@ -34,6 +35,16 @@ SPRING_DATASOURCE_PASSWORD=senha
 
 O Spring carrega esse arquivo por meio de `spring.config.import`, procurando primeiro no diretório atual e depois no diretório pai. Assim ele funciona tanto ao rodar de dentro de `backend/` quanto da raiz. Se as mesmas variáveis estiverem definidas no sistema ou no Docker (`env_file`), elas têm prioridade sobre o arquivo.
 
+Variáveis opcionais:
+
+| Variável | Padrão | Uso |
+|---|---|---|
+| `FRONTEND_URL` | `http://localhost:5173` | Origem liberada no CORS e base dos links enviados por e-mail |
+| `ARMAZENAMENTO_DIR` | `uploads` | Pasta dos anexos e documentos (fica fora do Git e de qualquer pasta pública) |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | — | Servidor SMTP para convites e alertas |
+
+Sem `MAIL_HOST`, os e-mails não são enviados: o texto da mensagem aparece no log, o que permite testar convites em desenvolvimento. Nesse modo os alertas de vencimento não são processados.
+
 ## Executando
 
 ```bash
@@ -47,21 +58,89 @@ mvnw.cmd spring-boot:run
 Outros comandos úteis:
 
 ```bash
-./mvnw compile   # compila o projeto
-./mvnw test      # executa os testes
-./mvnw package   # gera o .jar em target/
+./mvnw compile            # compila o projeto
+./mvnw test "-Dtest=*Test" # testes unitários das regras de negócio (não usam o banco)
+./mvnw test               # todos os testes, incluindo o que sobe a aplicação com o banco
+./mvnw package            # gera o .jar em target/
 ```
 
 ## Estrutura de pacotes
 
 ```text
 src/main/java/ted/com/tudoemdia/
+├── config/         # Segurança, CORS, agendamento e relógio no horário de Brasília
+├── controller/     # Endpoints REST, sem regras de negócio
+├── dto/            # Contratos de entrada e saída da API (records)
+├── exception/      # Exceções de negócio e respostas de erro padronizadas
 ├── model/          # Entidades JPA
 │   └── enuns/      # Enums do domínio
-└── repository/     # Interfaces Spring Data JPA
+├── repository/     # Interfaces Spring Data JPA
+├── security/       # Matriz de permissões e controle de acesso por empresa
+└── service/        # Regras de negócio, transações e rotinas agendadas
 ```
 
-Os próximos pacotes previstos na arquitetura são `controller`, `service`, `dto`, `config`, `security` e `exception`.
+## Autenticação e permissões
+
+A API usa **sessão em cookie** (`JSESSIONID`), que expira após 30 minutos sem atividade (RN07). Como o cookie é enviado automaticamente pelo navegador, as requisições que alteram dados (`POST`, `PUT`, `PATCH`, `DELETE`) exigem o **token CSRF**:
+
+1. `GET /api/auth/csrf` grava o cookie `XSRF-TOKEN`;
+2. o front envia o valor desse cookie no cabeçalho `X-XSRF-TOKEN`;
+3. as requisições usam `credentials: "include"` (fetch) ou `withCredentials: true` (Axios).
+
+O Axios faz o passo 2 sozinho (`withXSRFToken: true`). No Postman ou Insomnia, chame `/api/auth/csrf` primeiro e copie o valor do cookie para o cabeçalho.
+
+Os dados de cada empresa ficam sob `/api/empresas/{empresaId}/...`. A cada requisição o servidor confere se o usuário tem vínculo ativo com a empresa e se o perfil dele permite a operação (RN23). Sem vínculo, a resposta é `403`. A matriz de [permissões](../docs/04-permissoes_de_usuario.md) está no enum `security.Permissao`, e `GET /api/empresas/{empresaId}/permissoes` devolve a lista do usuário logado para o front montar o menu (RN24).
+
+Os erros seguem o formato `application/problem+json`, com a mensagem em `detail`. Erros de validação trazem também `campos`, com a mensagem de cada campo inválido.
+
+## Endpoints
+
+Todas as rotas começam com `/api`. Exigem login, exceto as marcadas como públicas.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/auth/csrf` | Gera o token CSRF (público) |
+| POST | `/auth/cadastro` | Cria uma conta (público) |
+| POST | `/auth/login` | Inicia a sessão (público) |
+| POST | `/auth/logout` | Encerra a sessão |
+| GET | `/auth/me` | Usuário logado |
+| GET, POST | `/empresas` | Empresas do usuário; cadastra uma empresa (quem cadastra vira proprietário) |
+| GET | `/empresas/{e}` | Dados da empresa e perfil do usuário nela |
+| GET | `/empresas/{e}/permissoes` | Permissões do usuário na empresa |
+| GET | `/empresas/{e}/usuarios` | Usuários vinculados |
+| PATCH | `/empresas/{e}/usuarios/{vinculoId}` | Altera perfil, ativa/desativa acesso ou recebimento de alertas |
+| GET, POST | `/empresas/{e}/convites` | Lista e envia convites |
+| DELETE | `/empresas/{e}/convites/{conviteId}` | Cancela um convite pendente |
+| GET | `/convites/{token}` | Dados do convite a partir do link do e-mail (público) |
+| POST | `/convites/{token}/aceite` | Aceita o convite com a conta logada |
+| GET, POST | `/empresas/{e}/categorias` | Lista e cria categorias |
+| DELETE | `/empresas/{e}/categorias/{categoriaId}` | Exclui categoria da empresa que não esteja em uso |
+| GET, POST | `/empresas/{e}/obrigacoes` | Lista (filtros `inicio`, `fim`, `categoriaId`, `status`) e cadastra, com recorrência opcional |
+| GET, PUT, DELETE | `/empresas/{e}/obrigacoes/{obrigacaoId}` | Detalha, edita e exclui (`escopo=SOMENTE_ESTA` ou `ESTA_E_FUTURAS`) |
+| GET, POST | `/empresas/{e}/obrigacoes/{obrigacaoId}/anexos` | Lista e envia anexos (`multipart/form-data`, campo `arquivo`) |
+| GET | `/empresas/{e}/anexos/{anexoId}/arquivo` | Baixa um anexo |
+| DELETE | `/empresas/{e}/anexos/{anexoId}` | Remove um anexo |
+| POST | `/empresas/{e}/obrigacoes/{obrigacaoId}/recorrencia` | Torna recorrente uma obrigação existente |
+| GET | `/empresas/{e}/recorrencias` | Lista recorrências |
+| PUT | `/empresas/{e}/recorrencias/{recorrenciaId}` | Altera a recorrência (afeta só ocorrências futuras não pagas) |
+| POST | `/empresas/{e}/obrigacoes/{obrigacaoId}/pagamento` | Registra o pagamento |
+| GET | `/empresas/{e}/pagamentos` | Histórico (filtros `inicio` e `fim` pela data do pagamento) |
+| POST | `/empresas/{e}/pagamentos/{pagamentoId}/cancelamento` | Cancela um pagamento registrado por engano |
+| GET, POST | `/empresas/{e}/documentos` | Lista (filtros `categoriaId`, `status`) e cadastra (`multipart/form-data`) |
+| GET, PUT, DELETE | `/empresas/{e}/documentos/{documentoId}` | Detalha, edita e exclui |
+| GET, PUT | `/empresas/{e}/documentos/{documentoId}/arquivo` | Baixa ou substitui o arquivo |
+| GET, PUT | `/empresas/{e}/alertas` | Consulta e configura os prazos de alerta |
+| GET | `/empresas/{e}/painel?mes=AAAA-MM` | Indicadores do mês (sem `mes`, o mês atual) |
+| GET | `/empresas/{e}/relatorios/obrigacoes` | PDF de obrigações e pagamentos, com os mesmos filtros da listagem |
+
+## Rotinas agendadas
+
+| Horário (Brasília) | Rotina |
+|---|---|
+| 0h | Marca obrigações e documentos vencidos, expira convites e gera as próximas ocorrências recorrentes |
+| 8h | Envia os alertas de vencimento (7, 3 e 1 dia antes e no dia), sem repetir envios |
+
+As duas também rodam ao iniciar a aplicação (os alertas, só depois das 8h), para recuperar o que não foi processado enquanto ela estava parada. São idempotentes: rodar de novo não duplica nada.
 
 ## Modelo de domínio
 
@@ -114,7 +193,9 @@ O `ObrigacaoRepository` também estende `JpaSpecificationExecutor`, para os filt
 - [x] Criar a migration inicial do Flyway ([V1__criar_tabelas.sql](src/main/resources/db/migration/V1__criar_tabelas.sql)), com as tabelas, as categorias padrão e o índice único parcial que garante no máximo um pagamento vigente por obrigação.
 - [x] Configurar o datasource e o JPA no `application.properties`.
 - [x] Ler as credenciais do banco a partir do `.env`, em vez de valores fixos.
+- [x] Services e controllers com as regras de negócio e a matriz de permissões.
 - [ ] Configurar o serviço do banco no `docker-compose.yml`.
+- [ ] Atendimento ao titular dos dados (acesso e exclusão, RNF14).
 
 ## Migrations
 

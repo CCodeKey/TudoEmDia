@@ -22,7 +22,11 @@ public interface ObrigacaoRepository extends JpaRepository<Obrigacao, String>, J
 	List<Obrigacao> findByEmpresaIdAndStatusOrderByDataVencimentoAsc(String empresaId, StatusObrigacao status);
 
 	// Obrigações que geram alerta na data (RN77)
-	List<Obrigacao> findByStatusAndDataVencimento(StatusObrigacao status, LocalDate dataVencimento);
+	List<Obrigacao> findByEmpresaIdAndStatusAndDataVencimento(String empresaId, StatusObrigacao status,
+			LocalDate dataVencimento);
+
+	// Obrigações do mês, para o painel (RN87, RN89)
+	List<Obrigacao> findByEmpresaIdAndDataVencimentoBetween(String empresaId, LocalDate inicio, LocalDate fim);
 
 	// Categoria em uso não pode ser excluída (RN42)
 	boolean existsByCategoriaId(String categoriaId);
