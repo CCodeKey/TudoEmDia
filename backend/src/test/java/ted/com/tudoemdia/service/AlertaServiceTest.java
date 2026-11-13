@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -54,9 +55,7 @@ class AlertaServiceTest {
 	private final ControleAcesso controleAcesso = mock(ControleAcesso.class);
 	private final EmailService emailService = mock(EmailService.class);
 	private final TransactionTemplate transacao = mock(TransactionTemplate.class);
-	private final AlertaService alertaService = new AlertaService(configuracaoRepository, alertaEnviadoRepository,
-			obrigacaoRepository, usuarioEmpresaRepository, mock(UsuarioRepository.class), controleAcesso, emailService,
-			transacao, clock, "http://localhost:5173");
+	private final AlertaService alertaService = criarServico(clock);
 	private final Empresa empresa = new Empresa();
 
 	@BeforeEach
@@ -129,6 +128,36 @@ class AlertaServiceTest {
 		alertaService.enviarAlertasDoDia();
 
 		verify(emailService).enviar(any(), any(), any());
+	}
+
+	@Test
+	void obrigacaoCriadaDepoisDas8hRecebeOAlertaDoDiaNaHora() {
+		prepararAlertaDeTresDias();
+		List<ConfiguracaoAlerta> prazosDaEmpresa = configuracaoRepository.findByAtivoTrue();
+		when(configuracaoRepository.findByEmpresaIdOrderByDiasAntecedenciaDesc("e1")).thenReturn(prazosDaEmpresa);
+
+		// O relógio do teste marca 12h em Brasília: a rotina das 8h já passou
+		alertaService.verificarAposAlteracao("e1");
+
+		verify(emailService).enviar(eq("ana@teste.com"), anyString(), anyString());
+	}
+
+	@Test
+	void antesDas8hDeixaParaARotinaDoDia() {
+		prepararAlertaDeTresDias();
+		Clock madrugada = Clock.fixed(Instant.parse("2026-11-12T09:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+
+		criarServico(madrugada).verificarAposAlteracao("e1");
+
+		verifyNoInteractions(configuracaoRepository);
+		verify(emailService, never()).enviar(any(), any(), any());
+	}
+
+	// O executor roda na mesma thread, para o teste esperar o envio
+	private AlertaService criarServico(Clock relogio) {
+		return new AlertaService(configuracaoRepository, alertaEnviadoRepository, obrigacaoRepository,
+				usuarioEmpresaRepository, mock(UsuarioRepository.class), controleAcesso, emailService, transacao,
+				Runnable::run, relogio, "http://localhost:5173");
 	}
 
 	private void prepararAlertaDeTresDias() {

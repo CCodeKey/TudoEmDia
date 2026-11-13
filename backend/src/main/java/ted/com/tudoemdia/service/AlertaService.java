@@ -4,17 +4,23 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import ted.com.tudoemdia.dto.alerta.ConfiguracaoAlertasRequest;
 import ted.com.tudoemdia.dto.alerta.PrazoAlerta;
@@ -39,9 +45,13 @@ public class AlertaService {
 	// 7, 3 e 1 dia antes e no dia do vencimento (RF21)
 	public static final List<Integer> PRAZOS = List.of(7, 3, 1, 0);
 
+	// Horário da rotina diária de alertas, em Brasília (RN79)
+	public static final LocalTime HORARIO_ALERTAS = LocalTime.of(8, 0);
+
 	private static final Logger log = LoggerFactory.getLogger(AlertaService.class);
 	private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+	private final ReentrantLock emAndamento = new ReentrantLock();
 	private final ConfiguracaoAlertaRepository configuracaoRepository;
 	private final AlertaEnviadoRepository alertaEnviadoRepository;
 	private final ObrigacaoRepository obrigacaoRepository;
@@ -50,13 +60,15 @@ public class AlertaService {
 	private final ControleAcesso controleAcesso;
 	private final EmailService emailService;
 	private final TransactionTemplate transacao;
+	private final Executor executor;
 	private final Clock clock;
 	private final String frontendUrl;
 
 	public AlertaService(ConfiguracaoAlertaRepository configuracaoRepository,
 			AlertaEnviadoRepository alertaEnviadoRepository, ObrigacaoRepository obrigacaoRepository,
 			UsuarioEmpresaRepository usuarioEmpresaRepository, UsuarioRepository usuarioRepository,
-			ControleAcesso controleAcesso, EmailService emailService, TransactionTemplate transacao, Clock clock,
+			ControleAcesso controleAcesso, EmailService emailService, TransactionTemplate transacao,
+			@Qualifier("applicationTaskExecutor") Executor executor, Clock clock,
 			@Value("${app.frontend-url}") String frontendUrl) {
 		this.configuracaoRepository = configuracaoRepository;
 		this.alertaEnviadoRepository = alertaEnviadoRepository;
@@ -66,6 +78,7 @@ public class AlertaService {
 		this.controleAcesso = controleAcesso;
 		this.emailService = emailService;
 		this.transacao = transacao;
+		this.executor = executor;
 		this.clock = clock;
 		this.frontendUrl = frontendUrl;
 	}
@@ -119,25 +132,69 @@ public class AlertaService {
 			log.warn("Envio de alertas ignorado: e-mail não configurado (MAIL_HOST).");
 			return;
 		}
-		LocalDate hoje = LocalDate.now(clock);
-		List<AlertaPendente> pendentes = transacao.execute(status -> buscarPendentes(hoje));
-		int enviados = 0;
-		int falhas = 0;
-		for (AlertaPendente alerta : pendentes) {
-			try {
-				if (Boolean.TRUE.equals(transacao.execute(status -> enviar(alerta)))) {
-					enviados++;
-				}
-			} catch (RuntimeException e) {
-				falhas++;
-			}
-		}
-		log.info("Alertas de vencimento: {} enviados, {} com falha", enviados, falhas);
+		int[] resultado = enviarAlertas(null);
+		log.info("Alertas de vencimento: {} enviados, {} com falha", resultado[0], resultado[1]);
 	}
 
-	private List<AlertaPendente> buscarPendentes(LocalDate hoje) {
+	// Obrigação cadastrada ou alterada depois das 8h: a rotina do dia já passou, então os alertas que
+	// caírem num prazo de hoje são enviados agora, em segundo plano, depois de a alteração ser gravada
+	public void verificarAposAlteracao(String empresaId) {
+		if (!emailService.habilitado() || LocalTime.now(clock).isBefore(HORARIO_ALERTAS)) {
+			return;
+		}
+		Runnable verificacao = () -> {
+			try {
+				int[] resultado = enviarAlertas(empresaId);
+				if (resultado[0] + resultado[1] > 0) {
+					log.info("Alertas após alteração: {} enviados, {} com falha", resultado[0], resultado[1]);
+				}
+			} catch (RuntimeException e) {
+				log.error("Falha ao verificar os alertas após a alteração", e);
+			}
+		};
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			executor.execute(verificacao);
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				executor.execute(verificacao);
+			}
+		});
+	}
+
+	// empresaId nulo: todas as empresas. Devolve {enviados, falhas}.
+	// Uma verificação por vez, para alterações seguidas não disputarem o mesmo alerta
+	private int[] enviarAlertas(String empresaId) {
+		emAndamento.lock();
+		try {
+			LocalDate hoje = LocalDate.now(clock);
+			List<AlertaPendente> pendentes = transacao.execute(status -> buscarPendentes(hoje, empresaId));
+			int enviados = 0;
+			int falhas = 0;
+			for (AlertaPendente alerta : pendentes) {
+				try {
+					if (Boolean.TRUE.equals(transacao.execute(status -> enviar(alerta)))) {
+						enviados++;
+					}
+				} catch (RuntimeException e) {
+					falhas++;
+				}
+			}
+			return new int[] { enviados, falhas };
+		} finally {
+			emAndamento.unlock();
+		}
+	}
+
+	private List<AlertaPendente> buscarPendentes(LocalDate hoje, String empresaFiltrada) {
 		List<AlertaPendente> pendentes = new ArrayList<>();
-		for (ConfiguracaoAlerta configuracao : configuracaoRepository.findByAtivoTrue()) {
+		List<ConfiguracaoAlerta> configuracoes = empresaFiltrada == null
+				? configuracaoRepository.findByAtivoTrue()
+				: configuracaoRepository.findByEmpresaIdOrderByDiasAntecedenciaDesc(empresaFiltrada).stream()
+						.filter(ConfiguracaoAlerta::isAtivo).toList();
+		for (ConfiguracaoAlerta configuracao : configuracoes) {
 			String empresaId = configuracao.getEmpresa().getId();
 			int dias = configuracao.getDiasAntecedencia();
 			// Só obrigações pendentes geram alerta (RN77)

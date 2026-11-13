@@ -55,6 +55,48 @@ test('valida o formulário de obrigação', async () => {
   await expect(dialogo()).toBeHidden();
 });
 
+test('recorrência sem data de vencimento usa hoje e avisa isso', async () => {
+  await pagina.goto(rota('obrigacoes'));
+  await pagina.getByRole('button', { name: 'Nova obrigação' }).first().click();
+  await dialogo().getByLabel('Descrição').fill('Contador mensal');
+  await dialogo().getByLabel('Valor (R$)').fill('450');
+  await dialogo().getByLabel('Categoria').selectOption({ label: 'Outros' });
+  await dialogo().getByText('Repetir esta obrigação').click();
+  await expect(
+    dialogo().getByText('Se não adicionar uma data, hoje será usado como data da recorrência.'),
+  ).toBeVisible();
+  await dialogo().getByLabel(/^Vencimento/).fill('');
+  await dialogo().getByRole('button', { name: 'Cadastrar' }).click();
+
+  await mensagem(pagina, 'Obrigação cadastrada.');
+  await expect(pagina.getByRole('heading', { name: 'Contador mensal' })).toBeVisible();
+  await expect(pagina.locator('dl div', { hasText: 'Vencimento' })).toContainText(dataBr(dataIso(0)));
+  await expect(pagina.locator('dl div', { hasText: 'Recorrência' })).toContainText('Mensal');
+});
+
+test('torna recorrente uma obrigação ao editá-la', async () => {
+  const seguro = await api(pagina, 'POST', `/empresas/${empresaId}/obrigacoes`, {
+    descricao: 'Seguro da loja',
+    valor: 380,
+    categoriaId: categorias.Outros,
+    dataVencimento: dataIso(12),
+  });
+  await pagina.goto(rota(`obrigacoes/${seguro.id}`));
+  await pagina.getByRole('button', { name: 'Editar' }).click();
+  await dialogo().getByText('Tornar esta obrigação recorrente').click();
+  await dialogo().getByLabel('Periodicidade').selectOption('ANUAL');
+  await dialogo().getByRole('button', { name: 'Salvar alterações' }).click();
+
+  await mensagem(pagina, 'Obrigação atualizada e agora se repete.');
+  await expect(pagina.locator('dl div', { hasText: 'Recorrência' })).toContainText('Anual');
+
+  // Já recorrente: a edição mostra o aviso em vez da opção
+  await pagina.getByRole('button', { name: 'Editar' }).click();
+  await expect(dialogo().getByText('Esta obrigação se repete (anual).')).toBeVisible();
+  await expect(dialogo().getByText('Tornar esta obrigação recorrente')).toHaveCount(0);
+  await pagina.keyboard.press('Escape');
+});
+
 test('registra e cancela pagamento; obrigação paga não muda valor', async () => {
   const das = await api(pagina, 'POST', `/empresas/${empresaId}/obrigacoes`, {
     descricao: 'DAS Simples Nacional',

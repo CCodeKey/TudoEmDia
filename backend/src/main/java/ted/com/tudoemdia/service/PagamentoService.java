@@ -28,13 +28,15 @@ public class PagamentoService {
 
 	private final PagamentoRepository pagamentoRepository;
 	private final ObrigacaoRepository obrigacaoRepository;
+	private final AlertaService alertaService;
 	private final ControleAcesso controleAcesso;
 	private final Clock clock;
 
 	public PagamentoService(PagamentoRepository pagamentoRepository, ObrigacaoRepository obrigacaoRepository,
-			ControleAcesso controleAcesso, Clock clock) {
+			AlertaService alertaService, ControleAcesso controleAcesso, Clock clock) {
 		this.pagamentoRepository = pagamentoRepository;
 		this.obrigacaoRepository = obrigacaoRepository;
+		this.alertaService = alertaService;
 		this.controleAcesso = controleAcesso;
 		this.clock = clock;
 	}
@@ -79,6 +81,8 @@ public class PagamentoService {
 		// A situação volta a depender do vencimento (RN46)
 		Obrigacao obrigacao = pagamento.getObrigacao();
 		obrigacao.setStatus(Situacoes.daObrigacao(obrigacao.getDataVencimento(), false, LocalDate.now(clock)));
+		// Voltando a ficar pendente, a obrigação pode precisar de alerta ainda hoje
+		alertaService.verificarAposAlteracao(empresaId);
 		return PagamentoResponse.de(pagamento);
 	}
 

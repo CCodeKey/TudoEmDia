@@ -5,12 +5,13 @@ import { Botao } from '../components/ui/Botao';
 import { CabecalhoPagina } from '../components/ui/CabecalhoPagina';
 import { CampoTexto } from '../components/ui/Campos';
 import { Carregando } from '../components/ui/Carregando';
-import { Aviso, ErroCarregamento } from '../components/ui/Estados';
+import { Aviso, ErroCarregamento, Vazio } from '../components/ui/Estados';
 import { Modal } from '../components/ui/Modal';
 import { useAcao } from '../hooks/useAcao';
 import { useAuth } from '../hooks/useAuth';
 import { useCarregar } from '../hooks/useCarregar';
 import { empresaService } from '../services/empresaService';
+import { pulouCadastroEmpresa, registrarQuePulouCadastroEmpresa } from '../utils/armazenamento';
 import { formatarCnpj } from '../utils/formato';
 import { PERFIS } from '../utils/rotulos';
 
@@ -56,13 +57,41 @@ export function Empresas() {
   const navegar = useNavigate();
   const { dados: empresas, carregando, erro, recarregar } = useCarregar(() => empresaService.listar(), []);
   const [modalAberto, setModalAberto] = useState(false);
+  const [pulou, setPulou] = useState(() => pulouCadastroEmpresa(usuario.id));
 
   const abrirEmpresa = (empresa) => navegar(`/empresas/${empresa.id}/painel`);
+
+  const pular = () => {
+    registrarQuePulouCadastroEmpresa(usuario.id);
+    setPulou(true);
+  };
+
+  const modalNovaEmpresa = (
+    <Modal
+      aberto={modalAberto}
+      aoFechar={() => setModalAberto(false)}
+      titulo="Nova empresa"
+      descricao="Você será o proprietário desta empresa."
+    >
+      <FormularioEmpresa
+        aoCriar={abrirEmpresa}
+        rodape={(enviando) => (
+          <div className="linha" style={{ justifyContent: 'flex-end' }}>
+            <Botao onClick={() => setModalAberto(false)}>Cancelar</Botao>
+            <Botao type="submit" variante="primario" carregando={enviando}>
+              Cadastrar
+            </Botao>
+          </div>
+        )}
+      />
+    </Modal>
+  );
 
   if (carregando) return <Carregando />;
   if (erro) return <ErroCarregamento erro={erro} aoTentarNovamente={recarregar} />;
 
-  if (!empresas.length) {
+  // Primeiro acesso: convida a cadastrar a empresa, mas permite deixar para depois
+  if (!empresas.length && !pulou) {
     return (
       <div className="pagina" style={{ maxWidth: 520, margin: '0 auto' }}>
         <CabecalhoPagina
@@ -74,13 +103,43 @@ export function Empresas() {
             <FormularioEmpresa
               aoCriar={abrirEmpresa}
               rodape={(enviando) => (
-                <Botao type="submit" variante="primario" bloco carregando={enviando}>
-                  Cadastrar empresa
-                </Botao>
+                <div className="pilha pilha--p">
+                  <Botao type="submit" variante="primario" bloco carregando={enviando}>
+                    Cadastrar empresa
+                  </Botao>
+                  <Botao variante="fantasma" bloco onClick={pular} disabled={enviando}>
+                    Pular por enquanto
+                  </Botao>
+                </div>
               )}
             />
           </div>
         </div>
+        <p className="texto-fraco" style={{ textAlign: 'center' }}>
+          Vai trabalhar na empresa de outra pessoa? Pule esta etapa e aceite o convite que chegar no seu e-mail.
+        </p>
+      </div>
+    );
+  }
+
+  // Sem empresa, depois de pular: espera um convite ou cadastra quando quiser
+  if (!empresas.length) {
+    return (
+      <div className="pagina">
+        <CabecalhoPagina titulo="Suas empresas" />
+        <div className="cartao">
+          <Vazio
+            icone={Building2}
+            titulo="Você ainda não participa de nenhuma empresa"
+            descricao="Cadastre a sua quando quiser. Se alguém convidar você, o convite chega por e-mail e a empresa aparece aqui depois do aceite."
+            acao={
+              <Botao variante="primario" icone={Plus} onClick={() => setModalAberto(true)}>
+                Cadastrar empresa
+              </Botao>
+            }
+          />
+        </div>
+        {modalNovaEmpresa}
       </div>
     );
   }
@@ -113,24 +172,7 @@ export function Empresas() {
         ))}
       </div>
 
-      <Modal
-        aberto={modalAberto}
-        aoFechar={() => setModalAberto(false)}
-        titulo="Nova empresa"
-        descricao="Você será o proprietário desta empresa."
-      >
-        <FormularioEmpresa
-          aoCriar={abrirEmpresa}
-          rodape={(enviando) => (
-            <div className="linha" style={{ justifyContent: 'flex-end' }}>
-              <Botao onClick={() => setModalAberto(false)}>Cancelar</Botao>
-              <Botao type="submit" variante="primario" carregando={enviando}>
-                Cadastrar
-              </Botao>
-            </div>
-          )}
-        />
-      </Modal>
+      {modalNovaEmpresa}
     </div>
   );
 }

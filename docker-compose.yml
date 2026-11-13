@@ -37,10 +37,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-tudoemdia}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-tudoemdia}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      MAIL_HOST: mailpit
-      MAIL_PORT: 1025
-      MAIL_SMTP_AUTH: "false"
-      MAIL_SMTP_STARTTLS: "false"
+      # E-mail: por padrão vai para o Mailpit (http://localhost:8025) e não chega a ninguém.
+      # Para enviar de verdade, defina SMTP_HOST, SMTP_PORT, SMTP_AUTH, SMTP_STARTTLS,
+      # MAIL_USERNAME, MAIL_PASSWORD e MAIL_FROM no .env
+      MAIL_HOST: ${SMTP_HOST:-mailpit}
+      MAIL_PORT: ${SMTP_PORT:-1025}
+      MAIL_SMTP_AUTH: ${SMTP_AUTH:-false}
+      MAIL_SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       ARMAZENAMENTO_DIR: /app/uploads
     ports:
       - "8080:8080"

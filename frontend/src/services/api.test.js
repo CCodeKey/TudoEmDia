@@ -20,13 +20,40 @@ describe('consulta', () => {
 });
 
 describe('cliente da API', () => {
+  // Precisa rodar primeiro: depois dele o cliente já sabe que o CSRF está desligado
+  it('sem token CSRF, busca um antes de alterar dados (ex.: login depois do logout)', async () => {
+    const buscar = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+      if (url === '/api/auth/csrf') {
+        document.cookie = 'XSRF-TOKEN=novo-token';
+        return new Response(null, { status: 204 });
+      }
+      return respostaJson(200, {});
+    });
+
+    await api.post('/auth/login', { email: 'a@b.com', senha: 'x' });
+
+    expect(buscar.mock.calls.map(([url]) => url)).toEqual(['/api/auth/csrf', '/api/auth/login']);
+    expect(buscar.mock.calls[1][1].headers['X-XSRF-TOKEN']).toBe('novo-token');
+  });
+
+  it('com o CSRF desligado no servidor, para de buscar o token', async () => {
+    const buscar = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+      url === '/api/auth/csrf' ? new Response(null, { status: 204 }) : respostaJson(200, {}),
+    );
+
+    await api.post('/empresas', {});
+    await api.post('/empresas', {});
+
+    expect(buscar.mock.calls.map(([url]) => url)).toEqual(['/api/auth/csrf', '/api/empresas', '/api/empresas']);
+  });
+
   it('envia JSON com cookie de sessão e devolve o corpo', async () => {
     const buscar = vi.spyOn(globalThis, 'fetch').mockResolvedValue(respostaJson(200, { id: '1' }));
 
     const resultado = await api.post('/empresas', { nome: 'Padaria' });
 
     expect(resultado).toEqual({ id: '1' });
-    const [url, opcoes] = buscar.mock.calls[0];
+    const [url, opcoes] = buscar.mock.calls.at(-1);
     expect(url).toBe('/api/empresas');
     expect(opcoes.credentials).toBe('include');
     expect(opcoes.headers['Content-Type']).toBe('application/json');

@@ -55,7 +55,13 @@ export async function criarEmpresaPelaTela(pagina, nome) {
 
 // Chamadas diretas à API com a sessão do navegador, para preparar dados rapidamente
 export async function api(pagina, metodo, caminho, dados) {
-  const resposta = await pagina.request.fetch(`/api${caminho}`, { method: metodo, data: dados });
+  // Envia o token CSRF como o front faz, para funcionar também com a proteção ligada
+  const token = (await pagina.context().cookies()).find((cookie) => cookie.name === 'XSRF-TOKEN')?.value;
+  const resposta = await pagina.request.fetch(`/api${caminho}`, {
+    method: metodo,
+    data: dados,
+    headers: token ? { 'X-XSRF-TOKEN': decodeURIComponent(token) } : {},
+  });
   expect(resposta.ok(), `${metodo} ${caminho} → ${resposta.status()}`).toBeTruthy();
   return resposta.status() === 204 ? null : resposta.json();
 }

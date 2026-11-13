@@ -51,6 +51,8 @@ public class EmailService {
 		for (int tentativa = 1;; tentativa++) {
 			try {
 				mailSender.getObject().send(mensagem);
+				// Só o assunto: o endereço da pessoa não vai para o log (LGPD)
+				log.info("E-mail \"{}\" entregue ao servidor de e-mail", assunto);
 				return;
 			} catch (MailException e) {
 				if (tentativa > NOVAS_TENTATIVAS) {

@@ -30,7 +30,7 @@ class RecorrenciaServiceTest {
 	private final ObrigacaoRepository obrigacaoRepository = mock(ObrigacaoRepository.class);
 	private final RecorrenciaService recorrenciaService = new RecorrenciaService(mock(RecorrenciaRepository.class),
 			obrigacaoRepository, mock(ExclusaoObrigacaoService.class), mock(CategoriaService.class),
-			mock(ControleAcesso.class), Clock.systemDefaultZone());
+			mock(AlertaService.class), mock(ControleAcesso.class), Clock.systemDefaultZone());
 	private final List<Obrigacao> geradas = new ArrayList<>();
 	private final Recorrencia recorrencia = new Recorrencia();
 

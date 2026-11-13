@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { Botao } from '../ui/Botao';
 import { CaixaSelecao, CampoSelecao, CampoTexto, CampoValor } from '../ui/Campos';
 import { Aviso } from '../ui/Estados';
@@ -8,8 +9,9 @@ import { useCategorias } from '../../hooks/useCategorias';
 import { useEmpresa } from '../../hooks/useEmpresa';
 import { obrigacaoService } from '../../services/obrigacaoService';
 import { hojeIso } from '../../utils/formato';
+import { PERIODICIDADES } from '../../utils/rotulos';
 
-// Cadastro (RF07, com recorrência opcional RF16) e edição (RF09) de obrigações
+// Cadastro (RF07) e edição (RF09) de obrigações; nos dois, a recorrência é opcional (RF16)
 export function FormularioObrigacao(props) {
   // Montado só quando aberto, para começar sempre com os dados atuais
   return props.aberto ? <Conteudo {...props} /> : null;
@@ -20,6 +22,8 @@ function Conteudo({ aoFechar, obrigacao, paga = false, aoSalvar }) {
   const { categorias } = useCategorias(empresa.id);
   const { executar, enviando, erro } = useAcao();
   const editando = Boolean(obrigacao);
+  const jaRecorrente = Boolean(obrigacao?.recorrenciaId);
+  const podeRepetir = pode('CONFIGURAR_RECORRENCIA') && !jaRecorrente;
   const [dados, setDados] = useState({
     descricao: obrigacao?.descricao ?? '',
     valor: obrigacao?.valor ?? '',
@@ -39,12 +43,14 @@ function Conteudo({ aoFechar, obrigacao, paga = false, aoSalvar }) {
   };
 
   async function salvar() {
+    // Recorrente sem data: o primeiro vencimento é hoje
+    const vencimento = dados.dataVencimento || (dados.recorrente ? hojeIso() : '');
     const locais = {};
     if (!dados.descricao.trim()) locais.descricao = 'Informe a descrição.';
     if (!(Number(dados.valor) > 0)) locais.valor = 'Informe um valor maior que zero.';
     if (!dados.categoriaId) locais.categoriaId = 'Escolha uma categoria.';
-    if (!dados.dataVencimento) locais.dataVencimento = 'Informe o vencimento.';
-    if (dados.recorrente && dados.dataFim && dados.dataFim < dados.dataVencimento) {
+    if (!vencimento) locais.dataVencimento = 'Informe o vencimento.';
+    if (dados.recorrente && dados.dataFim && dados.dataFim < vencimento) {
       locais.dataFim = 'A data final não pode ser anterior ao primeiro vencimento.';
     }
     setErrosLocais(locais);
@@ -54,17 +60,27 @@ function Conteudo({ aoFechar, obrigacao, paga = false, aoSalvar }) {
       descricao: dados.descricao.trim(),
       valor: Number(dados.valor),
       categoriaId: dados.categoriaId,
-      dataVencimento: dados.dataVencimento,
+      dataVencimento: vencimento,
     };
-    if (!editando && dados.recorrente) {
-      corpo.recorrencia = { periodicidade: dados.periodicidade, dataFim: dados.dataFim || null };
-    }
+    const recorrencia = dados.recorrente ? { periodicidade: dados.periodicidade, dataFim: dados.dataFim || null } : null;
+
     const resultado = await executar(
-      () =>
-        editando
-          ? obrigacaoService.atualizar(empresa.id, obrigacao.id, corpo)
-          : obrigacaoService.criar(empresa.id, corpo),
-      { sucesso: editando ? 'Obrigação atualizada.' : 'Obrigação cadastrada.', mostrarErro: false },
+      async () => {
+        if (!editando) {
+          return obrigacaoService.criar(empresa.id, recorrencia ? { ...corpo, recorrencia } : corpo);
+        }
+        const atualizada = await obrigacaoService.atualizar(empresa.id, obrigacao.id, corpo);
+        if (recorrencia) await obrigacaoService.tornarRecorrente(empresa.id, obrigacao.id, recorrencia);
+        return atualizada;
+      },
+      {
+        sucesso: !editando
+          ? 'Obrigação cadastrada.'
+          : recorrencia
+            ? 'Obrigação atualizada e agora se repete.'
+            : 'Obrigação atualizada.',
+        mostrarErro: false,
+      },
     );
     if (resultado.ok) {
       aoFechar();
@@ -110,10 +126,16 @@ function Conteudo({ aoFechar, obrigacao, paga = false, aoSalvar }) {
           />
           <CampoTexto
             rotulo="Vencimento"
+            opcional={dados.recorrente}
             type="date"
             value={dados.dataVencimento}
             onChange={alterar('dataVencimento')}
             erro={erros.dataVencimento}
+            ajuda={
+              dados.recorrente
+                ? 'Se não adicionar uma data, hoje será usado como data da recorrência.'
+                : undefined
+            }
             disabled={paga}
           />
         </div>
@@ -129,10 +151,18 @@ function Conteudo({ aoFechar, obrigacao, paga = false, aoSalvar }) {
           ))}
         </CampoSelecao>
 
-        {!editando && pode('CONFIGURAR_RECORRENCIA') && (
+        {jaRecorrente && (
+          <Aviso tom="info">
+            Esta obrigação se repete ({PERIODICIDADES[obrigacao.periodicidade].toLowerCase()}). Para mudar a
+            recorrência, use a tela <Link to={`/empresas/${empresa.id}/recorrencias`}>Recorrências</Link>.
+          </Aviso>
+        )}
+
+        {podeRepetir && (
           <div className="pilha pilha--p">
             <CaixaSelecao checked={dados.recorrente} onChange={alterar('recorrente')}>
-              <strong>Repetir esta obrigação</strong>
+              <strong>{editando ? 'Tornar esta obrigação recorrente' : 'Repetir esta obrigação'}</strong>
+              <span className="campo__opcional"> (opcional)</span>
               <span className="texto-fraco" style={{ display: 'block' }}>
                 Novas ocorrências são criadas automaticamente a cada mês ou ano.
               </span>

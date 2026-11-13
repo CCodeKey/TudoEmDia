@@ -179,6 +179,10 @@ Todas as rotas começam com `/api`. Exigem login, exceto as marcadas como públi
 
 As duas também rodam ao iniciar a aplicação (os alertas, só depois das 8h), para recuperar o que não foi processado enquanto ela estava parada. São idempotentes: rodar de novo não duplica nada.
 
+Obrigações cadastradas ou alteradas **depois das 8h** (inclusive por recorrência ou cancelamento de pagamento) não esperam o dia seguinte: se caírem num prazo de hoje (por exemplo, vencem hoje ou daqui a 7 dias), o alerta é enviado logo após a gravação, em segundo plano. Sem isso, esses alertas se perderiam.
+
+> **E-mails no Docker:** por padrão, tudo vai para o Mailpit (http://localhost:8025) e **não chega** às caixas de e-mail reais. Para enviar de verdade, configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_AUTH`, `SMTP_STARTTLS`, `MAIL_USERNAME`, `MAIL_PASSWORD` e `MAIL_FROM` no `.env` (veja o `.env.example`).
+
 ## LGPD (RNF14)
 
 - O consentimento com os termos é registrado com data no cadastro.

@@ -32,16 +32,18 @@ public class RecorrenciaService {
 	private final ObrigacaoRepository obrigacaoRepository;
 	private final ExclusaoObrigacaoService exclusaoObrigacaoService;
 	private final CategoriaService categoriaService;
+	private final AlertaService alertaService;
 	private final ControleAcesso controleAcesso;
 	private final Clock clock;
 
 	public RecorrenciaService(RecorrenciaRepository recorrenciaRepository, ObrigacaoRepository obrigacaoRepository,
 			ExclusaoObrigacaoService exclusaoObrigacaoService, CategoriaService categoriaService,
-			ControleAcesso controleAcesso, Clock clock) {
+			AlertaService alertaService, ControleAcesso controleAcesso, Clock clock) {
 		this.recorrenciaRepository = recorrenciaRepository;
 		this.obrigacaoRepository = obrigacaoRepository;
 		this.exclusaoObrigacaoService = exclusaoObrigacaoService;
 		this.categoriaService = categoriaService;
+		this.alertaService = alertaService;
 		this.controleAcesso = controleAcesso;
 		this.clock = clock;
 	}
@@ -62,7 +64,9 @@ public class RecorrenciaService {
 		if (obrigacao.getRecorrencia() != null) {
 			throw new ConflitoException("Esta obrigação já é recorrente.");
 		}
-		return RecorrenciaResponse.de(criarPara(obrigacao, dados));
+		Recorrencia recorrencia = criarPara(obrigacao, dados);
+		alertaService.verificarAposAlteracao(empresaId);
+		return RecorrenciaResponse.de(recorrencia);
 	}
 
 	// A obrigação passa a ser a primeira ocorrência; a data dela define o dia dos vencimentos
@@ -116,6 +120,7 @@ public class RecorrenciaService {
 			}
 		}
 		gerarOcorrencias(recorrencia, hoje);
+		alertaService.verificarAposAlteracao(empresaId);
 		return RecorrenciaResponse.de(recorrencia);
 	}
 

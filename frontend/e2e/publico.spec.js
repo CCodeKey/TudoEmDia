@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SENHA, cadastrarPelaTela, criarEmpresaPelaTela, sufixo } from './apoio';
+import { SENHA, cadastrarPelaTela, cnpjValido, criarEmpresaPelaTela, sufixo } from './apoio';
 
 test.describe('landing page', () => {
   test('apresenta o produto e leva ao cadastro e ao login', async ({ page }) => {
@@ -61,6 +61,34 @@ test.describe('cadastro e login', () => {
     await page.goto('/empresas');
     await criarEmpresaPelaTela(page, 'Empresa da Lia');
     await expect(page.getByRole('heading', { name: 'Painel' })).toBeVisible();
+  });
+
+  test('pode pular o cadastro da empresa e fazer depois', async ({ page }) => {
+    await cadastrarPelaTela(page, { nome: 'Téo Sem Empresa', email: `teo.${sufixo()}@teste.com` });
+    await page.getByRole('button', { name: 'Pular por enquanto' }).click();
+    await expect(page.getByText('Você ainda não participa de nenhuma empresa')).toBeVisible();
+
+    // A escolha é lembrada: a tela de boas-vindas não volta
+    await page.reload();
+    await expect(page.getByText('Você ainda não participa de nenhuma empresa')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Cadastrar empresa' }).click();
+    await page.getByRole('dialog').getByLabel('Nome da empresa').fill('Empresa do Téo');
+    await page.getByRole('dialog').getByLabel('CNPJ').fill(cnpjValido());
+    await page.getByRole('dialog').getByRole('button', { name: 'Cadastrar' }).click();
+    await expect(page).toHaveURL(/\/painel$/);
+  });
+
+  test('minha conta não deixa um dado invadir o outro', async ({ page }) => {
+    const email = `um.endereco.de.email.bem.comprido.para.testar.${sufixo()}@empresa-com-nome-longo.com.br`;
+    await cadastrarPelaTela(page, { nome: 'Vera', email });
+    await expect(page).toHaveURL(/\/empresas$/);
+    await page.goto('/conta');
+    await expect(page.getByText(email)).toBeVisible();
+    const vazando = await page.$$eval('.lista-dados dd', (itens) =>
+      itens.filter((item) => item.scrollWidth > item.clientWidth + 1).map((item) => item.textContent),
+    );
+    expect(vazando).toEqual([]);
   });
 
   test('e-mail repetido é recusado no cadastro', async ({ page }) => {

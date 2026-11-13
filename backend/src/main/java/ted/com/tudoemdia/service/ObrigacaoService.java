@@ -45,19 +45,21 @@ public class ObrigacaoService {
 	private final CategoriaService categoriaService;
 	private final RecorrenciaService recorrenciaService;
 	private final ExclusaoObrigacaoService exclusaoObrigacaoService;
+	private final AlertaService alertaService;
 	private final ControleAcesso controleAcesso;
 	private final Clock clock;
 
 	public ObrigacaoService(ObrigacaoRepository obrigacaoRepository, PagamentoRepository pagamentoRepository,
 			AnexoObrigacaoRepository anexoRepository, CategoriaService categoriaService,
 			RecorrenciaService recorrenciaService, ExclusaoObrigacaoService exclusaoObrigacaoService,
-			ControleAcesso controleAcesso, Clock clock) {
+			AlertaService alertaService, ControleAcesso controleAcesso, Clock clock) {
 		this.obrigacaoRepository = obrigacaoRepository;
 		this.pagamentoRepository = pagamentoRepository;
 		this.anexoRepository = anexoRepository;
 		this.categoriaService = categoriaService;
 		this.recorrenciaService = recorrenciaService;
 		this.exclusaoObrigacaoService = exclusaoObrigacaoService;
+		this.alertaService = alertaService;
 		this.controleAcesso = controleAcesso;
 		this.clock = clock;
 	}
@@ -108,6 +110,7 @@ public class ObrigacaoService {
 		if (dados.recorrencia() != null) {
 			recorrenciaService.criarPara(obrigacao, dados.recorrencia());
 		}
+		alertaService.verificarAposAlteracao(empresaId);
 		return ObrigacaoResponse.de(obrigacao, null, hoje);
 	}
 
@@ -132,6 +135,7 @@ public class ObrigacaoService {
 		obrigacao.setStatus(Situacoes.daObrigacao(dados.dataVencimento(), pagamento != null, hoje));
 		obrigacao.setUsuarioAtualizacao(controleAcesso.referenciaUsuarioAtual());
 		obrigacaoRepository.saveAndFlush(obrigacao);
+		alertaService.verificarAposAlteracao(empresaId);
 		return ObrigacaoResponse.de(obrigacao, pagamento, hoje);
 	}
 

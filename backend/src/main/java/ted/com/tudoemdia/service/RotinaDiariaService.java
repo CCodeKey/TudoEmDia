@@ -24,7 +24,6 @@ import ted.com.tudoemdia.repository.RecorrenciaRepository;
 public class RotinaDiariaService {
 
 	private static final Logger log = LoggerFactory.getLogger(RotinaDiariaService.class);
-	private static final LocalTime HORARIO_ALERTAS = LocalTime.of(8, 0);
 
 	private final ObrigacaoRepository obrigacaoRepository;
 	private final DocumentoRepository documentoRepository;
@@ -82,7 +81,7 @@ public class RotinaDiariaService {
 	public void aoIniciar() {
 		try {
 			atualizarSituacoes();
-			if (!LocalTime.now(clock).isBefore(HORARIO_ALERTAS)) {
+			if (!LocalTime.now(clock).isBefore(AlertaService.HORARIO_ALERTAS)) {
 				enviarAlertas();
 			}
 		} catch (RuntimeException e) {

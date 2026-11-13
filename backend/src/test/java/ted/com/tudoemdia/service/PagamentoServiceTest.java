@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -34,8 +35,9 @@ class PagamentoServiceTest {
 	private final PagamentoRepository pagamentoRepository = mock(PagamentoRepository.class);
 	private final ObrigacaoRepository obrigacaoRepository = mock(ObrigacaoRepository.class);
 	private final ControleAcesso controleAcesso = mock(ControleAcesso.class);
+	private final AlertaService alertaService = mock(AlertaService.class);
 	private final PagamentoService pagamentoService = new PagamentoService(pagamentoRepository, obrigacaoRepository,
-			controleAcesso, clock);
+			alertaService, controleAcesso, clock);
 	private final Obrigacao obrigacao = new Obrigacao();
 	private final Usuario usuario = new Usuario();
 
@@ -99,5 +101,7 @@ class PagamentoServiceTest {
 		assertThat(resposta.cancelado()).isTrue();
 		assertThat(resposta.canceladoPor()).isEqualTo("Ana");
 		assertThat(obrigacao.getStatus()).isEqualTo(StatusObrigacao.VENCIDA);
+		// Voltando a ficar em aberto, os alertas da empresa são conferidos de novo
+		verify(alertaService).verificarAposAlteracao("e1");
 	}
 }

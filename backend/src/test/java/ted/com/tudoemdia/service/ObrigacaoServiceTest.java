@@ -51,7 +51,8 @@ class ObrigacaoServiceTest {
 	private final ExclusaoObrigacaoService exclusaoService = new ExclusaoObrigacaoService(obrigacaoRepository,
 			pagamentoRepository, anexoRepository, mock(AlertaEnviadoRepository.class), armazenamentoService);
 	private final ObrigacaoService obrigacaoService = new ObrigacaoService(obrigacaoRepository, pagamentoRepository,
-			anexoRepository, categoriaService, mock(RecorrenciaService.class), exclusaoService, controleAcesso, clock);
+			anexoRepository, categoriaService, mock(RecorrenciaService.class), exclusaoService, mock(AlertaService.class),
+			controleAcesso, clock);
 	private final Categoria categoria = new Categoria();
 	private final Obrigacao obrigacao = new Obrigacao();
 

@@ -41,9 +41,23 @@ function nomeDoArquivo(cabecalho) {
   return simples ? simples[1] : 'arquivo';
 }
 
+// Com a proteção CSRF ligada, o servidor apaga o token no logout. Antes de alterar dados, busca um
+// novo se faltar; se o servidor não devolver token (CSRF desligado), para de buscar
+let csrfDesligado = false;
+
+async function garantirTokenCsrf() {
+  if (csrfDesligado || lerCookie('XSRF-TOKEN')) return;
+  try {
+    await fetch(`${BASE}/auth/csrf`, { credentials: 'include' });
+  } catch {
+    return;
+  }
+  if (!lerCookie('XSRF-TOKEN')) csrfDesligado = true;
+}
+
 async function requisicao(caminho, { metodo = 'GET', corpo, formulario, tipo = 'json', ignorar401 = false } = {}) {
   const cabecalhos = { Accept: 'application/json' };
-  // Usado quando a proteção CSRF do back-end estiver ligada
+  if (metodo !== 'GET') await garantirTokenCsrf();
   const tokenCsrf = lerCookie('XSRF-TOKEN');
   if (tokenCsrf) cabecalhos['X-XSRF-TOKEN'] = tokenCsrf;
 
