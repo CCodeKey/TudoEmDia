@@ -1,5 +1,5 @@
 # Ambiente de desenvolvimento do TudoEmDia (docs/07-arquitetura.md)
-#   docker compose up -d                    -> banco, e-mail e back-end
+#   docker compose up -d                    -> banco, e-mail, back-end e front-end (http://localhost:5173)
 #   docker compose up -d postgres mailpit   -> só banco e e-mail, para rodar o back-end pela IDE
 # Valores lidos do .env na raiz (veja .env.example).
 
@@ -52,7 +52,13 @@ services:
       mailpit:
         condition: service_started
 
-  # O serviço "frontend" entra aqui quando a aplicação React existir.
+  # Front-end React servido pelo Nginx, que também repassa /api ao back-end
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres-dados:

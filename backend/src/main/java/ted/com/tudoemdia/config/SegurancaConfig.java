@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -60,6 +62,14 @@ public class SegurancaConfig {
 	@Bean
 	public SecurityContextRepository securityContextRepository() {
 		return new HttpSessionSecurityContextRepository();
+	}
+
+	// O login é feito pelo AuthService; isto impede o Spring de criar um usuário padrão com senha no log
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return username -> {
+			throw new UsernameNotFoundException(username);
+		};
 	}
 
 	// BCrypt com custo 10 (RNF02)

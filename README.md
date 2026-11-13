@@ -53,11 +53,30 @@ O MVP contempla:
 
 ```text
 .
-├── backend/       # Aplicação Back end
-├── frontend/      # Aplicação Front end
+├── backend/       # API em Java com Spring Boot
+├── frontend/      # Interface em React + Vite
 ├── docs/          # Requisitos, arquitetura e modelo de dados
+├── docker-compose.yml
 └── README.md
 ```
+
+## Como executar
+
+Com o Docker Desktop aberto, na raiz do repositório:
+
+```bash
+cp .env.example .env          # preencha POSTGRES_PASSWORD
+docker compose up -d --build
+```
+
+| Serviço | Endereço |
+|---|---|
+| Sistema (front-end) | http://localhost:5173 |
+| API | http://localhost:8080/api |
+| Documentação da API (Swagger) | http://localhost:8080/swagger-ui/index.html |
+| E-mails enviados (Mailpit) | http://localhost:8025 |
+
+Detalhes de cada parte: [back-end](backend/README.md) e [front-end](frontend/README.md).
 
 ## Documentação
 
