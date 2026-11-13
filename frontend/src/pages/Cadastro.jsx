@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Botao } from '../components/ui/Botao';
-import { CaixaSelecao, CampoTexto } from '../components/ui/Campos';
+import { CaixaSelecao, CampoSenha, CampoTexto } from '../components/ui/Campos';
 import { Aviso } from '../components/ui/Estados';
+import { ForcaSenha } from '../components/ui/ForcaSenha';
 import { useAuth } from '../hooks/useAuth';
 import { destinoAposLogin } from '../utils/navegacao';
 
@@ -70,15 +71,17 @@ export function Cadastro() {
           onChange={alterar('email')}
           erro={erros.email}
         />
-        <CampoTexto
-          rotulo="Senha"
-          type="password"
-          autoComplete="new-password"
-          value={dados.senha}
-          onChange={alterar('senha')}
-          erro={erros.senha}
-          ajuda="Pelo menos 8 caracteres, com letras e números."
-        />
+        <div className="pilha pilha--p">
+          <CampoSenha
+            rotulo="Senha"
+            autoComplete="new-password"
+            value={dados.senha}
+            onChange={alterar('senha')}
+            erro={erros.senha}
+            ajuda={dados.senha ? undefined : 'Pelo menos 8 caracteres, com letras e números.'}
+          />
+          <ForcaSenha senha={dados.senha} />
+        </div>
         <div className="pilha pilha--p">
           <CaixaSelecao checked={dados.aceiteTermos} onChange={alterar('aceiteTermos')}>
             Li e aceito os{' '}

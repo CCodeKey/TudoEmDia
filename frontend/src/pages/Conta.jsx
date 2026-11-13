@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ShieldCheck, Trash2 } from 'lucide-react';
 import { Botao } from '../components/ui/Botao';
 import { CabecalhoPagina } from '../components/ui/CabecalhoPagina';
-import { CampoTexto } from '../components/ui/Campos';
+import { CampoSenha } from '../components/ui/Campos';
 import { Carregando } from '../components/ui/Carregando';
 import { Confirmacao } from '../components/ui/Confirmacao';
 import { Aviso, ErroCarregamento } from '../components/ui/Estados';
@@ -151,9 +151,8 @@ export function Conta() {
         enviando={enviando}
       >
         {erroExclusao && <Aviso tom="perigo">{erroExclusao.message}</Aviso>}
-        <CampoTexto
+        <CampoSenha
           rotulo="Senha"
-          type="password"
           autoComplete="current-password"
           value={senha}
           onChange={(evento) => setSenha(evento.target.value)}

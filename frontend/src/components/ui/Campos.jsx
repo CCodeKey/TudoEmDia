@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Upload } from 'lucide-react';
+import { Eye, EyeOff, Upload } from 'lucide-react';
 import { TIPOS_ACEITOS, tamanhoLegivel } from '../../utils/arquivos';
 
 function Campo({ id, rotulo, opcional, ajuda, erro, children }) {
@@ -44,6 +44,38 @@ export function CampoTexto({ rotulo, opcional, ajuda, erro, pequeno, className =
         {...atributosAcessiveis(id, erro, ajuda)}
         {...props}
       />
+    </Campo>
+  );
+}
+
+// Campo de senha com botão para mostrar ou ocultar o que foi digitado
+export function CampoSenha({ rotulo, opcional, ajuda, erro, className = '', ...props }) {
+  const id = useId();
+  const [visivel, setVisivel] = useState(false);
+  return (
+    <Campo id={id} rotulo={rotulo} opcional={opcional} ajuda={ajuda} erro={erro}>
+      <div className="campo-senha">
+        <input
+          className={`entrada ${className}`}
+          type={visivel ? 'text' : 'password'}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          {...atributosAcessiveis(id, erro, ajuda)}
+          {...props}
+        />
+        <button
+          type="button"
+          className="campo-senha__botao"
+          onClick={() => setVisivel((atual) => !atual)}
+          aria-label={visivel ? 'Ocultar senha' : 'Mostrar senha'}
+          aria-pressed={visivel}
+          aria-controls={id}
+          title={visivel ? 'Ocultar senha' : 'Mostrar senha'}
+        >
+          {visivel ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+        </button>
+      </div>
     </Campo>
   );
 }

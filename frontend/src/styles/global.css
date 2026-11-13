@@ -2226,3 +2226,114 @@ textarea.entrada {
     display: none;
   }
 }
+
+/* ----- Medidor de força da senha ---------------------------------------- */
+
+.forca-senha {
+  --cor-nivel: var(--cor-perigo);
+  display: grid;
+  gap: 8px;
+}
+
+.forca-senha--aviso {
+  --cor-nivel: var(--cor-aviso);
+}
+
+.forca-senha--info {
+  --cor-nivel: #52a86a;
+}
+
+.forca-senha--sucesso {
+  --cor-nivel: var(--cor-sucesso);
+}
+
+.forca-senha__topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.forca-senha__barra {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.forca-senha__barra span {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--cor-superficie-3);
+  transition: background 200ms ease;
+}
+
+.forca-senha__barra .forca-senha__segmento--ativo {
+  background: var(--cor-nivel);
+}
+
+.forca-senha__rotulo {
+  min-width: 64px;
+  color: var(--cor-nivel);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-align: right;
+}
+
+.forca-senha__requisitos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cor-texto-3);
+  font-size: 0.8rem;
+}
+
+.forca-senha__requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forca-senha__requisitos .forca-senha__ok {
+  color: var(--cor-sucesso);
+}
+
+/* ----- Campo de senha com "olhinho" ------------------------------------- */
+
+.campo-senha {
+  position: relative;
+}
+
+.campo-senha .entrada {
+  padding-right: 44px;
+}
+
+/* Esconde o botão nativo do Edge para não aparecer dois olhinhos */
+.campo-senha .entrada::-ms-reveal,
+.campo-senha .entrada::-ms-clear {
+  display: none;
+}
+
+.campo-senha__botao {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--raio-p);
+  color: var(--cor-texto-3);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.campo-senha__botao:hover {
+  background: var(--cor-superficie-2);
+  color: var(--cor-texto);
+}

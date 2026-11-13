@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Botao } from '../components/ui/Botao';
-import { CampoTexto } from '../components/ui/Campos';
+import { CampoSenha, CampoTexto } from '../components/ui/Campos';
 import { Aviso } from '../components/ui/Estados';
 import { useAuth } from '../hooks/useAuth';
 import { destinoAposLogin } from '../utils/navegacao';
@@ -47,9 +47,8 @@ export function Login() {
           onChange={(evento) => setEmail(evento.target.value)}
           required
         />
-        <CampoTexto
+        <CampoSenha
           rotulo="Senha"
-          type="password"
           autoComplete="current-password"
           value={senha}
           onChange={(evento) => setSenha(evento.target.value)}

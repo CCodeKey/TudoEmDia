@@ -135,7 +135,7 @@ Todas as rotas começam com `/api`. Exigem login, exceto as marcadas como públi
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/auth/csrf` | Gera o token CSRF (público) |
-| POST | `/auth/cadastro` | Cria uma conta (público) |
+| POST | `/auth/cadastro` | Cria uma conta e envia o e-mail de boas-vindas (público) |
 | POST | `/auth/login` | Inicia a sessão (público) |
 | POST | `/auth/logout` | Encerra a sessão |
 | GET | `/auth/me` | Usuário logado |

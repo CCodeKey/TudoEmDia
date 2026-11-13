@@ -88,3 +88,4 @@ Detalhes de cada parte: [back-end](backend/README.md) e [front-end](frontend/REA
 - [Modelo de dados](docs/06-modelo_de_dados.drawio)
 - [Arquitetura](docs/07-arquitetura.md)
 - [Critérios de aceitação](docs/08-criterios_de_aceitacao.md)
+- [Documentação da API (Swagger)](http://localhost:8080/swagger-ui/index.html): disponível com o back-end rodando
