@@ -27,7 +27,17 @@ export default [
     },
   },
   {
-    files: ['vite.config.js', 'eslint.config.js'],
+    files: ['vite.config.js', 'eslint.config.js', 'playwright.config.js'],
+    languageOptions: { globals: globals.node },
+  },
+  // Testes unitários usam as funções globais do Vitest (describe, it, expect, vi)
+  {
+    files: ['src/**/*.test.{js,jsx}', 'src/test/**'],
+    languageOptions: { globals: { ...globals.browser, ...globals.vitest } },
+  },
+  // Testes de ponta a ponta rodam no Node
+  {
+    files: ['e2e/**'],
     languageOptions: { globals: globals.node },
   },
 ];

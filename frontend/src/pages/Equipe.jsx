@@ -19,17 +19,23 @@ import { PERFIS } from '../utils/rotulos';
 function Membros() {
   const { empresa, pode } = useEmpresa();
   const { usuario } = useAuth();
-  const { dados, carregando, erro, recarregar } = useCarregar(() => equipeService.membros(empresa.id), [empresa.id]);
+  const { dados, carregando, erro, recarregar, alterarDados } = useCarregar(
+    () => equipeService.membros(empresa.id),
+    [empresa.id],
+  );
   const { executar } = useAcao();
   const podeGerenciar = pode('GERENCIAR_ACESSOS');
   const podeAlertas = pode('CONFIGURAR_ALERTAS');
 
+  // A mudança aparece na hora; se o servidor recusar (ex.: único proprietário), volta ao estado anterior
   const atualizar = async (membro, alteracao, sucesso) => {
+    const substituir = (novo) => (lista) => lista.map((item) => (item.id === membro.id ? novo : item));
+    alterarDados(substituir({ ...membro, ...alteracao }));
     const resultado = await executar(() => equipeService.atualizarMembro(empresa.id, membro.id, alteracao), { sucesso });
-    if (resultado.ok) recarregar();
+    alterarDados(substituir(resultado.ok ? resultado.resultado : membro));
   };
 
-  if (carregando) return <Carregando />;
+  if (carregando && !dados) return <Carregando />;
   if (erro) return <ErroCarregamento erro={erro} aoTentarNovamente={recarregar} />;
 
   return (

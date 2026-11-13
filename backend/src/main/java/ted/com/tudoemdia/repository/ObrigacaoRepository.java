@@ -31,6 +31,8 @@ public interface ObrigacaoRepository extends JpaRepository<Obrigacao, String>, J
 	// Categoria em uso não pode ser excluída (RN42)
 	boolean existsByCategoriaId(String categoriaId);
 
+	boolean existsByRecorrenciaId(String recorrenciaId);
+
 	// Uma ocorrência por recorrência e data (RN64)
 	boolean existsByRecorrenciaIdAndDataVencimento(String recorrenciaId, LocalDate dataVencimento);
 

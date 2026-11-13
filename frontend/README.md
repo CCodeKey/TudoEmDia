@@ -49,9 +49,32 @@ VITE_API_PROXY=http://localhost:8081 npm run dev
 
 ```bash
 npm run lint      # linter
+npm test          # testes unitários (Vitest)
 npm run build     # gera a versão de produção em dist/
 npm run preview   # serve a versão de produção localmente
 ```
+
+## Testes
+
+**Unitários** (`src/**/*.test.js(x)`, Vitest + Testing Library): formatação, força da senha, validação de arquivos, cliente da API (erros, sessão expirada, CSRF, downloads) e componentes como cadastro, modal, olhinho da senha e permissões. Não precisam do back-end.
+
+```bash
+npm test
+```
+
+**De ponta a ponta** (`e2e/`, Playwright): usam o sistema no navegador, como uma pessoa usaria. Cobrem cadastro, empresa, obrigações, recorrência, pagamentos, anexos, documentos, PDF, painel, categorias, alertas, convite pelo e-mail (lido no Mailpit), perfis de acesso, LGPD e as larguras de 360, 768 e 1366 px.
+
+Eles criam contas e empresas, então rode-os contra um ambiente de teste, nunca contra dados reais. Com o back-end, o Mailpit e o front no ar:
+
+```bash
+npx playwright install chromium        # só na primeira vez
+npm run test:e2e
+
+# Usando o Edge ou o Chrome já instalado, e outro endereço
+PW_CHANNEL=msedge E2E_BASE_URL=http://localhost:5174 npm run test:e2e
+```
+
+Em caso de falha, os prints e o passo a passo ficam em `test-results/`.
 
 ## Estrutura
 

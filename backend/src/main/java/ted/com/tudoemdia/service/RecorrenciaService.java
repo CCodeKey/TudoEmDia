@@ -127,6 +127,12 @@ public class RecorrenciaService {
 		exclusaoObrigacaoService.remover(obrigacao);
 		futuras.forEach(exclusaoObrigacaoService::remover);
 
+		// Sem nenhuma ocorrência restante, a recorrência deixa de existir e libera a categoria (RN42);
+		// com ocorrências anteriores, só é encerrada, preservando o histórico
+		if (!obrigacaoRepository.existsByRecorrenciaId(recorrencia.getId())) {
+			recorrenciaRepository.delete(recorrencia);
+			return;
+		}
 		recorrencia.setAtiva(false);
 		LocalDate ultimoDia = obrigacao.getDataVencimento().minusDays(1);
 		if (!ultimoDia.isBefore(recorrencia.getDataInicio())) {

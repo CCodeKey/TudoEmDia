@@ -7,14 +7,6 @@ Plataforma web para pequenas empresas e MEIs centralizarem obrigações financei
 <table> 
     <tr>
         <td align="center"> 
-            <a href="https://github.com/clarasoaresdev"> 
-                <img src="https://avatars.githubusercontent.com/u/137517398?v=4" width="100px;" alt="Clara S."/><br> 
-                <sub>
-                    <b>Clara Soares</b> 
-                </sub> 
-            </a> 
-        </td> 
-        <td align="center"> 
             <a href="https://github.com/CCodekey"> 
                 <img src="https://avatars.githubusercontent.com/u/105808889?v=4" width="100px;" alt="Gabriel T."/><br> 
                 <sub>
@@ -27,6 +19,14 @@ Plataforma web para pequenas empresas e MEIs centralizarem obrigações financei
                 <img src="https://avatars.githubusercontent.com/u/109177631?v=4" width="100px;" alt="Hellen L."/><br> 
                 <sub> 
                     <b>Hellen Lima</b> 
+                </sub> 
+            </a> 
+        </td> 
+        <td align="center"> 
+            <a href="https://github.com/"> 
+                <img src="https://avatars.githubusercontent.com/" width="100px;" alt="Marcos F."/><br> 
+                <sub>
+                    <b>Marcos Ferreira</b> 
                 </sub> 
             </a> 
         </td> 

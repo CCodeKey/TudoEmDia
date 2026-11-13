@@ -2337,3 +2337,79 @@ textarea.entrada {
   background: var(--cor-superficie-2);
   color: var(--cor-texto);
 }
+
+/* ----- Landing: quem faz ------------------------------------------------ */
+
+.landing__devs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 260px));
+  justify-content: center;
+  gap: 20px;
+}
+
+.landing__dev {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 4px;
+  padding: 28px 20px 22px;
+  text-align: center;
+  transition: transform var(--transicao), box-shadow var(--transicao);
+}
+
+.landing__dev:hover {
+  box-shadow: var(--sombra-2);
+  transform: translateY(-2px);
+}
+
+.landing__dev-foto {
+  width: 104px;
+  height: 104px;
+  margin-bottom: 12px;
+  border: 3px solid var(--cor-superficie);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cor-primaria-suave), var(--sombra-1);
+  object-fit: cover;
+}
+
+.landing__dev-foto--iniciais {
+  display: grid;
+  place-items: center;
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.landing__dev h3 {
+  font-size: 1.05rem;
+}
+
+.landing__dev-links {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.landing__dev-links a {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: 50%;
+  color: var(--cor-texto-2);
+  transition: background var(--transicao), color var(--transicao), border-color var(--transicao);
+}
+
+.landing__dev-links a:hover {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: var(--cor-sobre-primaria);
+}
+
+@media (max-width: 760px) {
+  .landing__devs {
+    grid-template-columns: minmax(0, 320px);
+  }
+}

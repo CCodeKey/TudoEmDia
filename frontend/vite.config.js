@@ -13,4 +13,13 @@ export default defineConfig({
       },
     },
   },
+  // Testes unitários (npm test); os de ponta a ponta ficam em e2e/ com o Playwright
+  test: {
+    environment: 'jsdom',
+    // Funções globais (afterEach...) no setup evitam erro quando o caminho usa "c:" minúsculo no Windows
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    include: ['src/**/*.test.{js,jsx}'],
+    css: false,
+  },
 });

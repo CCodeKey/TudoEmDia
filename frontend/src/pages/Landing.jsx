@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
   ArrowRight,
@@ -15,9 +15,11 @@ import {
   UsersRound,
   Wallet,
 } from 'lucide-react';
+import { IconeGithub, IconeLinkedin } from '../components/IconesMarcas';
 import { Marca } from '../components/Marca';
 import { Rodape } from '../components/Rodape';
 import { Selo } from '../components/ui/Selo';
+import { iniciais } from '../utils/formato';
 
 // Funcionalidades do MVP (docs/01-escopo.md)
 const RECURSOS = [
@@ -76,6 +78,62 @@ const PERFIS = [
     texto: 'Consulta obrigações, documentos e histórico, e exporta relatórios em PDF.',
   },
 ];
+
+// Equipe do projeto. Campos vazios (null) são omitidos: sem foto, aparecem as iniciais;
+// sem github ou linkedin, o botão correspondente não aparece
+const DESENVOLVEDORES = [
+  {
+    nome: 'Gabriel Tertuliano',
+    foto: 'https://avatars.githubusercontent.com/u/105808889?v=4',
+    github: 'https://github.com/CCodekey',
+    linkedin: null,
+  },
+  {
+    nome: 'Hellen Lima',
+    foto: 'https://avatars.githubusercontent.com/u/109177631?v=4',
+    github: 'https://github.com/hellenilda',
+    linkedin: null,
+  },
+  {
+    nome: 'Marcos Ferreira',
+    foto: null,
+    github: null,
+    linkedin: null,
+  },
+];
+
+function CartaoDesenvolvedor({ nome, foto, github, linkedin }) {
+  const [semFoto, setSemFoto] = useState(!foto);
+  const usuarioGithub = github?.split('/').filter(Boolean).pop();
+
+  return (
+    <article className="cartao landing__dev">
+      {semFoto ? (
+        <span className="landing__dev-foto landing__dev-foto--iniciais" aria-hidden>
+          {iniciais(nome)}
+        </span>
+      ) : (
+        <img className="landing__dev-foto" src={foto} alt={`Foto de ${nome}`} loading="lazy" onError={() => setSemFoto(true)} />
+      )}
+      <h3>{nome}</h3>
+      {usuarioGithub && <p className="texto-fraco">@{usuarioGithub}</p>}
+      {(github || linkedin) && (
+        <div className="landing__dev-links">
+          {github && (
+            <a href={github} target="_blank" rel="noreferrer" aria-label={`GitHub de ${nome}`} title="GitHub">
+              <IconeGithub />
+            </a>
+          )}
+          {linkedin && (
+            <a href={linkedin} target="_blank" rel="noreferrer" aria-label={`LinkedIn de ${nome}`} title="LinkedIn">
+              <IconeLinkedin />
+            </a>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
 
 // Prévia ilustrativa do painel, montada com os próprios componentes do sistema
 function PreviaPainel() {
@@ -289,6 +347,20 @@ export function Landing() {
                 Criar minha conta
                 <ArrowRight size={18} aria-hidden />
               </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing__secao landing__secao--clara" aria-labelledby="quem-faz">
+          <div className="landing__largura">
+            <div className="landing__cabecalho-secao">
+              <h2 id="quem-faz">Quem faz o TudoEmDia</h2>
+              <p>O projeto foi idealizado e desenvolvido por esta equipe.</p>
+            </div>
+            <div className="landing__devs">
+              {DESENVOLVEDORES.map((desenvolvedor) => (
+                <CartaoDesenvolvedor key={desenvolvedor.nome} {...desenvolvedor} />
+              ))}
             </div>
           </div>
         </section>
