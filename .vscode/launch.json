@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-TudoemdiaApplication<tudoemdia>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "ted.com.tudoemdia.TudoemdiaApplication",
+            "projectName": "tudoemdia",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

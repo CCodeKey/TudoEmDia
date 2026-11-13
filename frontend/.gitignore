@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.local
+.env
+
+# Resultados dos testes de ponta a ponta
+test-results/
+playwright-report/
+blob-report/
