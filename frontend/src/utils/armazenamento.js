@@ -34,3 +34,14 @@ export function pulouCadastroEmpresa(usuarioId) {
 export function registrarQuePulouCadastroEmpresa(usuarioId) {
   gravar(PULOU_EMPRESA + usuarioId, 'sim');
 }
+
+// O tutorial de primeiro acesso só abre sozinho uma vez por usuário
+const VIU_TUTORIAL = 'tudoemdia:viu-tutorial:';
+
+export function viuTutorial(usuarioId) {
+  return ler(VIU_TUTORIAL + usuarioId) === 'sim';
+}
+
+export function registrarQueViuTutorial(usuarioId) {
+  gravar(VIU_TUTORIAL + usuarioId, 'sim');
+}

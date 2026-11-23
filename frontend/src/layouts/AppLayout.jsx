@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Marca } from '../components/Marca';
 import { Rodape } from '../components/Rodape';
+import { Tutorial } from '../components/Tutorial';
 import { useAuth } from '../hooks/useAuth';
 import { useEmpresa } from '../hooks/useEmpresa';
 import { formatarCnpj, iniciais } from '../utils/formato';
@@ -123,6 +124,8 @@ export function AppLayout() {
         </main>
         <Rodape />
       </div>
+
+      <Tutorial usuarioId={usuario.id} pode={pode} />
     </div>
   );
 }
