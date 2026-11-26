@@ -1,0 +1,230 @@
+@startuml diagrama_de_classes
+' Diagrama de classes do domínio do TudoEmDia.
+' Fonte: backend/src/main/java/ted/com/tudoemdia/model e security/Permissao.java
+' Explicação: docs/README.md
+
+title TudoEmDia — Diagrama de Classes (domínio)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+hide empty methods
+
+package "Acesso" {
+  class Usuario {
+    - id : String
+    - nome : String
+    - email : String {unique}
+    - senha : String  <<hash BCrypt>>
+    - dataAceiteTermos : LocalDateTime
+    - tentativasLoginFalhas : int
+    - bloqueadoAte : LocalDateTime [0..1]
+    - dataCriacao : LocalDateTime
+  }
+
+  class Empresa {
+    - id : String
+    - nome : String
+    - cnpj : String {unique, 14 dígitos}
+    - dataCriacao : LocalDateTime
+  }
+
+  class UsuarioEmpresa <<vínculo>> {
+    - id : String
+    - perfil : Perfil
+    - ativo : boolean = true
+    - recebeAlertas : boolean = true
+  }
+
+  class Convite {
+    - id : String
+    - emailConvidado : String
+    - perfilConvidado : Perfil
+    - status : StatusConvite = PENDENTE
+    - dataEnvio : LocalDateTime
+    - tokenHash : String {unique}
+    - dataExpiracao : LocalDateTime
+  }
+}
+
+package "Obrigações e pagamentos" {
+  class Categoria {
+    - id : String
+    - nome : String
+  }
+
+  class Obrigacao {
+    - id : String
+    - descricao : String
+    - valor : BigDecimal
+    - dataVencimento : LocalDate
+    - status : StatusObrigacao = PENDENTE
+    - dataCriacao : LocalDateTime
+    - dataAtualizacao : LocalDateTime [0..1]
+  }
+
+  class Recorrencia {
+    - id : String
+    - descricao : String
+    - valor : BigDecimal
+    - periodicidade : Periodicidade
+    - dataInicio : LocalDate
+    - dataFim : LocalDate [0..1]
+    - ativa : boolean = true
+  }
+
+  class AnexoObrigacao {
+    - id : String
+    - nomeArquivo : String
+    - caminhoArquivo : String  <<interno>>
+    - dataEnvio : LocalDateTime
+  }
+
+  class Pagamento {
+    - id : String
+    - valorPago : BigDecimal
+    - dataPagamento : LocalDate
+    - dataRegistro : LocalDateTime
+    - cancelado : boolean
+    - dataCancelamento : LocalDateTime [0..1]
+  }
+}
+
+package "Documentos" {
+  class Documento {
+    - id : String
+    - descricao : String
+    - dataValidade : LocalDate [0..1]
+    - nomeArquivo : String
+    - caminhoArquivo : String  <<interno>>
+    - status : StatusDocumento = ATIVO
+    - dataCriacao : LocalDateTime
+    - dataAtualizacao : LocalDateTime [0..1]
+  }
+}
+
+package "Alertas" {
+  class ConfiguracaoAlerta {
+    - id : String
+    - diasAntecedencia : int  <<7, 3, 1 ou 0>>
+    - ativo : boolean = true
+  }
+
+  class AlertaEnviado {
+    - id : String
+    - diasAntecedencia : int
+    - dataEnvio : LocalDateTime
+  }
+}
+
+package "Enumerações" {
+  enum Perfil {
+    PROPRIETARIO
+    FINANCEIRO
+    CONTADOR
+  }
+  enum StatusConvite {
+    PENDENTE
+    ACEITO
+    EXPIRADO
+    CANCELADO
+  }
+  enum StatusObrigacao {
+    PENDENTE
+    PAGA
+    VENCIDA
+  }
+  enum StatusDocumento {
+    ATIVO
+    VENCIDO
+    ARQUIVADO
+  }
+  enum Periodicidade {
+    MENSAL
+    ANUAL
+  }
+  enum Permissao {
+    CONSULTAR_PAINEL
+    CONSULTAR_OBRIGACOES
+    CADASTRAR_OBRIGACOES
+    EDITAR_OBRIGACOES
+    EXCLUIR_OBRIGACOES
+    CONSULTAR_DOCUMENTOS
+    CADASTRAR_DOCUMENTOS
+    EDITAR_DOCUMENTOS
+    EXCLUIR_DOCUMENTOS
+    CONFIGURAR_RECORRENCIA
+    REGISTRAR_PAGAMENTOS
+    CONSULTAR_HISTORICO_PAGAMENTOS
+    CONFIGURAR_ALERTAS
+    RECEBER_ALERTAS
+    CONVIDAR_USUARIOS
+    CONSULTAR_USUARIOS
+    GERENCIAR_ACESSOS
+    EXPORTAR_RELATORIOS
+    GERENCIAR_CATEGORIAS
+    CANCELAR_PAGAMENTOS
+    --
+    + permite(perfil : Perfil) : boolean
+    + {static} doPerfil(perfil : Perfil) : List<Permissao>
+  }
+}
+
+' ---- Acesso ----
+Usuario "1" -- "0..*" UsuarioEmpresa : possui >
+Empresa "1" -- "0..*" UsuarioEmpresa : tem membros >
+Empresa "1" -- "0..*" Convite : emite >
+Usuario "1" -- "0..*" Convite : convidante >
+
+' ---- Categorias (empresa nula = categoria padrão do sistema) ----
+Empresa "0..1" -- "0..*" Categoria : personaliza >
+
+' ---- Obrigações ----
+Empresa "1" -- "0..*" Obrigacao
+Categoria "1" -- "0..*" Obrigacao : classifica >
+Empresa "1" -- "0..*" Recorrencia
+Categoria "1" -- "0..*" Recorrencia
+Recorrencia "0..1" -- "0..*" Obrigacao : gera ocorrências >
+Obrigacao "1" *-- "0..*" AnexoObrigacao : anexos
+Obrigacao "1" -- "0..*" Pagamento : quitada por >
+Usuario "1" -- "0..*" Pagamento : registrou >
+Usuario "0..1" -- "0..*" Pagamento : cancelou >
+Usuario "0..1" -- "0..*" Obrigacao : última edição >
+
+' ---- Documentos ----
+Empresa "1" -- "0..*" Documento
+Categoria "1" -- "0..*" Documento : classifica >
+Usuario "0..1" -- "0..*" Documento : última edição >
+
+' ---- Alertas ----
+Empresa "1" *-- "0..4" ConfiguracaoAlerta : prazos
+Obrigacao "1" *-- "0..*" AlertaEnviado
+Usuario "1" -- "0..*" AlertaEnviado : destinatário >
+
+' ---- Enumerações ----
+UsuarioEmpresa ..> Perfil
+Convite ..> Perfil
+Convite ..> StatusConvite
+Obrigacao ..> StatusObrigacao
+Documento ..> StatusDocumento
+Recorrencia ..> Periodicidade
+Permissao ..> Perfil : perfis autorizados
+
+note bottom of Pagamento
+  No máximo um pagamento não cancelado
+  por obrigação (RN69). O histórico não é
+  editado nem apagado (RN73).
+end note
+
+note bottom of AlertaEnviado
+  Único por (obrigação, usuário, prazo):
+  evita envio duplicado (RN78).
+end note
+
+note top of Categoria
+  empresa = nula → categoria padrão
+  do sistema, visível a todas (RN41).
+end note
+
+@enduml
