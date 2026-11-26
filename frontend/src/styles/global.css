@@ -2420,3 +2420,180 @@ textarea.entrada {
     grid-template-columns: minmax(0, 320px);
   }
 }
+
+/* ----- Assistente de tutorial (primeiro acesso) ------------------------- */
+
+.tutorial,
+.tutorial-botao {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 45;
+}
+
+.tutorial {
+  display: grid;
+  gap: 14px;
+  width: 360px;
+  padding: 14px 16px 16px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-top: 3px solid var(--cor-primaria);
+  border-radius: var(--raio-g);
+  box-shadow: var(--sombra-3);
+  animation: subir 220ms ease;
+}
+
+.tutorial__topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial__avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+  color: var(--cor-sobre-primaria);
+}
+
+.tutorial__assistente {
+  flex: 1;
+  color: var(--cor-texto-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tutorial__conteudo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: subir 200ms ease;
+}
+
+.tutorial__icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--raio);
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria);
+}
+
+.tutorial__conteudo h2 {
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+  line-height: 1.3;
+}
+
+.tutorial__conteudo p {
+  margin: 0;
+  color: var(--cor-texto-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.tutorial__progresso {
+  display: flex;
+  gap: 4px;
+}
+
+.tutorial__ponto {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cor-superficie-3);
+  transition: background 200ms ease;
+}
+
+.tutorial__ponto--ativo {
+  background: var(--cor-primaria);
+}
+
+.tutorial__rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Item do menu que o assistente está explicando */
+.navegacao__item--tutorial {
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria);
+  box-shadow: 0 0 0 2px var(--cor-primaria);
+  animation: pulsar-tutorial 1.6s ease-in-out infinite;
+}
+
+@keyframes pulsar-tutorial {
+  50% {
+    box-shadow: 0 0 0 5px var(--cor-foco);
+  }
+}
+
+.tutorial-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cor-primaria);
+  color: var(--cor-sobre-primaria);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--sombra-2);
+  cursor: pointer;
+  animation: aparecer 200ms ease;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.tutorial-botao:hover {
+  background: var(--cor-primaria-forte);
+  transform: translateY(-1px);
+}
+
+.tutorial-botao:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+
+/* No celular, o assistente vira uma folha presa à base da tela */
+@media (max-width: 520px) {
+  .tutorial {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .tutorial-botao {
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .tutorial-botao__texto {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial,
+  .tutorial__conteudo,
+  .tutorial-botao,
+  .navegacao__item--tutorial {
+    animation: none;
+  }
+}

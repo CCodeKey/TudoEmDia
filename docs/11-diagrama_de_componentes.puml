@@ -1,0 +1,97 @@
+@startuml diagrama_de_componentes
+' Diagrama de componentes do TudoEmDia.
+' Fontes: docker-compose.yml, frontend/src, backend/src/main/java/ted/com/tudoemdia
+' Explicação: docs/README.md
+
+title TudoEmDia — Diagrama de Componentes
+
+skinparam shadowing false
+skinparam componentStyle uml2
+skinparam linetype polyline
+
+actor "Usuário" as Usuario
+
+node "Navegador" {
+  component "SPA React\n(React 19 + Vite)" as SPA {
+    component "Rotas\n(routes/AppRoutes, Protecoes)" as Rotas
+    component "Páginas e componentes\n(pages/, components/, layouts/)" as Paginas
+    component "Contextos\n(AuthProvider, EmpresaProvider,\nNotificacaoProvider)" as Contextos
+    component "Cliente da API\n(services/api.js + *Service.js)" as ClienteApi
+  }
+}
+
+node "Contêiner frontend\n(Nginx)" as NoFrontend {
+  component "Servidor web Nginx" as Nginx
+  artifact "Build estático\n(dist/)" as Dist
+}
+
+node "Contêiner backend\n(Spring Boot / Java)" as NoBackend {
+  component "Spring Security\n(SegurancaConfig: sessão,\nCSRF, CORS, BCrypt)" as Seguranca
+  component "Controllers REST\n(controller/*Controller)" as Controllers
+  component "Controle de acesso\n(ControleAcesso, Permissao)" as ControleAcesso
+  component "Serviços de negócio\n(Auth, Usuario, Empresa, Convite,\nAcesso, Obrigacao, Recorrencia,\nPagamento, Documento, Anexo,\nCategoria, Painel, TitularDados)" as Servicos
+  component "Rotinas agendadas\n(RotinaDiariaService:\n00h situações / 08h alertas)" as Rotinas
+  component "Alertas\n(AlertaService)" as Alertas
+  component "Relatórios PDF\n(RelatorioService, RelatorioPdf\n— Apache PDFBox)" as Relatorios
+  component "E-mail\n(EmailService — Spring Mail)" as EmailSvc
+  component "Armazenamento de arquivos\n(ArmazenamentoService)" as Armazenamento
+  component "Repositórios\n(Spring Data JPA)" as Repositorios
+  component "Migrações\n(Flyway)" as Flyway
+  component "Documentação da API\n(springdoc / Swagger UI)" as Swagger
+  component "Monitoramento\n(Actuator /health)" as Actuator
+  component "Tratamento de erros\n(TratadorExcecoes)" as Erros
+}
+
+node "Contêiner postgres" {
+  database "PostgreSQL" as Postgres
+}
+
+node "Contêiner mailpit\n(dev) / SMTP real (prod)" {
+  component "Servidor SMTP" as SMTP
+}
+
+storage "Volume uploads\n(/app/uploads)" as Uploads
+
+interface "HTTP/HTTPS" as IHttp
+interface "API REST /api\n(JSON, multipart, PDF)" as IApi
+interface "JDBC" as IJdbc
+interface "SMTP" as ISmtp
+
+' ---- Fluxo do usuário ----
+Usuario --> IHttp
+IHttp - Nginx
+Nginx ..> Dist : serve
+Nginx ..> SPA : entrega
+Rotas --> Paginas
+Paginas --> Contextos
+Paginas --> ClienteApi
+Contextos --> ClienteApi
+ClienteApi --> IApi : fetch + cookie\nde sessão + CSRF
+Nginx --> IApi : proxy /api
+
+' ---- Back-end ----
+IApi - Seguranca
+Seguranca --> Controllers
+Controllers --> Servicos
+Controllers --> Relatorios
+Controllers ..> Erros : exceções
+Servicos --> ControleAcesso
+Servicos --> Repositorios
+Servicos --> Armazenamento
+Servicos --> EmailSvc
+Servicos --> Alertas
+Relatorios --> Servicos
+Rotinas --> Servicos
+Rotinas --> Alertas
+Alertas --> Repositorios
+Alertas --> EmailSvc
+ControleAcesso --> Repositorios
+
+Repositorios --> IJdbc
+Flyway --> IJdbc
+IJdbc - Postgres
+EmailSvc --> ISmtp
+ISmtp - SMTP
+Armazenamento --> Uploads
+
+@enduml

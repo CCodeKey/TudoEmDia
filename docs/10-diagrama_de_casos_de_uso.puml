@@ -1,0 +1,153 @@
+@startuml diagrama_de_casos_de_uso
+' Diagrama de casos de uso do TudoEmDia.
+' Fontes: docs/02-requisitos_funcionais.md, docs/04-permissoes_de_usuario.md,
+'         backend/.../security/Permissao.java e os controllers da API.
+' Explicação: docs/README.md
+
+title TudoEmDia — Diagrama de Casos de Uso
+
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+' ---------------- Atores ----------------
+actor "Visitante" as Visitante
+actor "Usuário autenticado" as Autenticado
+actor "Membro da empresa" as Membro
+actor "Contador" as Contador
+actor "Operador financeiro" as Operador
+actor "Financeiro" as Financeiro
+actor "Proprietário" as Proprietario
+actor "Agendador\n(rotina diária)" as Agendador <<sistema>>
+actor "Servidor de e-mail" as Email <<sistema>>
+
+' Hierarquia: as permissões são cumulativas
+Membro -|> Autenticado
+Contador -|> Membro
+Operador -|> Membro
+Financeiro -|> Operador
+Proprietario -|> Operador
+
+rectangle "TudoEmDia" {
+
+  package "Conta e acesso" {
+    usecase "Cadastrar conta (RF01)" as UC01
+    usecase "Autenticar (RF02)" as UC02
+    usecase "Consultar convite" as UC03
+    usecase "Sair do sistema" as UC04
+    usecase "Cadastrar empresa (RF03)" as UC05
+    usecase "Aceitar convite (RF04)" as UC06
+    usecase "Consultar meus dados (LGPD)" as UC07
+    usecase "Excluir minha conta (LGPD)" as UC08
+  }
+
+  package "Equipe" {
+    usecase "Convidar usuário (RF04)" as UC10
+    usecase "Cancelar convite" as UC11
+    usecase "Consultar usuários vinculados (RF05)" as UC12
+    usecase "Gerenciar acesso e perfil (RF05, RF06)" as UC13
+  }
+
+  package "Obrigações" {
+    usecase "Consultar obrigações (RF08, RF12)" as UC20
+    usecase "Cadastrar obrigação (RF07)" as UC21
+    usecase "Editar obrigação (RF09)" as UC22
+    usecase "Excluir obrigação (RF10)" as UC23
+    usecase "Gerenciar categorias (RF11)" as UC24
+    usecase "Anexar arquivo (RF07)" as UC25
+    usecase "Configurar recorrência (RF16)" as UC26
+    usecase "Consultar recorrências" as UC27
+  }
+
+  package "Pagamentos" {
+    usecase "Registrar pagamento (RF18)" as UC30
+    usecase "Consultar histórico de pagamentos (RF19)" as UC31
+    usecase "Cancelar pagamento" as UC32
+  }
+
+  package "Documentos" {
+    usecase "Consultar documentos (RF14)" as UC40
+    usecase "Baixar arquivo" as UC41
+    usecase "Cadastrar documento (RF13)" as UC42
+    usecase "Editar documento (RF15)" as UC43
+    usecase "Excluir documento (RF15)" as UC44
+  }
+
+  package "Painel, relatórios e alertas" {
+    usecase "Visualizar painel (RF22–RF26)" as UC50
+    usecase "Exportar relatório PDF (RF27)" as UC51
+    usecase "Configurar alertas (RF20)" as UC52
+    usecase "Receber alerta de vencimento (RF21)" as UC53
+  }
+
+  package "Rotinas automáticas" {
+    usecase "Atualizar situações\n(obrigações, documentos, convites)" as UC60
+    usecase "Gerar obrigações recorrentes (RF17)" as UC61
+    usecase "Enviar alertas de vencimento (RF21)" as UC62
+  }
+}
+
+' ---------------- Associações ----------------
+Visitante --> UC01
+Visitante --> UC02
+Visitante --> UC03
+
+Autenticado --> UC04
+Autenticado --> UC05
+Autenticado --> UC06
+Autenticado --> UC07
+Autenticado --> UC08
+
+Membro --> UC20
+Membro --> UC27
+Membro --> UC31
+Membro --> UC40
+Membro --> UC50
+Membro --> UC51
+Membro --> UC53
+
+Operador --> UC21
+Operador --> UC22
+Operador --> UC23
+Operador --> UC24
+Operador --> UC26
+Operador --> UC30
+
+Proprietario --> UC10
+Proprietario --> UC11
+Proprietario --> UC12
+Proprietario --> UC13
+Proprietario --> UC32
+Proprietario --> UC42
+Proprietario --> UC43
+Proprietario --> UC44
+Proprietario --> UC52
+
+Agendador --> UC60
+Agendador --> UC61
+Agendador --> UC62
+UC62 --> Email
+UC10 --> Email
+
+' ---------------- Include / Extend ----------------
+UC06 .> UC03 : <<include>>
+UC13 .> UC12 : <<include>>
+UC25 .> UC21 : <<extend>>
+UC26 .> UC21 : <<extend>>
+UC41 .> UC40 : <<extend>>
+
+note right of Proprietario
+  Quem cadastra a empresa vira
+  Proprietário (RF03). Somente
+  ele gerencia equipe, documentos,
+  alertas e cancela pagamentos.
+end note
+
+note right of Contador
+  Perfil somente de consulta:
+  painel, obrigações, documentos,
+  histórico e relatórios.
+end note
+
+@enduml
